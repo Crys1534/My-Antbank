@@ -195,232 +195,267 @@
     </div>
 
     <script>
-        // === 1. CONFIGURACIÓN DE FIREBASE ===
-        // IMPORTANTE: Reemplaza esto con los datos de tu proyecto de Firebase
-        const firebaseConfig = {
-            apiKey: "AIzaSyBnX__R6A6lQw_KuzZxqHRkzZyj10S_4wU",
-            authDomain: "aula-virtual-79e4d.firebaseapp.com",
-            databaseURL: "https://aula-virtual-79e4d-default-rtdb.firebaseio.com",
-            projectId: "aula-virtual-79e4d",
-            storageBucket: "aula-virtual-79e4d.firebasestorage.app",
-            messagingSenderId: "384731632952",
-            appId: "1:384731632952:web:9b4facff98bc7f6ebf5dcd"
-        };
+// === 1. CONFIGURACIÓN DE FIREBASE ===
+const firebaseConfig = {
+    apiKey: "AIzaSyBnX__R6A6lQw_KuzZxqHRkzZyj10S_4wU",
+    authDomain: "aula-virtual-79e4d.firebaseapp.com",
+    databaseURL: "https://aula-virtual-79e4d-default-rtdb.firebaseio.com",
+    projectId: "aula-virtual-79e4d",
+    storageBucket: "aula-virtual-79e4d.firebasestorage.app",
+    messagingSenderId: "384731632952",
+    appId: "1:384731632952:web:9b4facff98bc7f6ebf5dcd"
+};
+
+firebase.initializeApp(firebaseConfig);
+const db = firebase.firestore();
+
+// === 2. EFECTOS MULTIMEDIA (GAMIFICACIÓN RESTAURADA) ===
+const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+
+function playSuccessSound() {
+    if (audioCtx.state === 'suspended') audioCtx.resume();
+    const osc = audioCtx.createOscillator();
+    const gain = audioCtx.createGain();
+    osc.connect(gain); gain.connect(audioCtx.destination);
+    osc.type = 'sine';
+    osc.frequency.setValueAtTime(523.25, audioCtx.currentTime); 
+    osc.frequency.exponentialRampToValueAtTime(880, audioCtx.currentTime + 0.1); 
+    gain.gain.setValueAtTime(0.5, audioCtx.currentTime);
+    gain.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.3);
+    osc.start(); osc.stop(audioCtx.currentTime + 0.3);
+}
+
+function playCoinSound() {
+    if (audioCtx.state === 'suspended') audioCtx.resume();
+    const osc = audioCtx.createOscillator();
+    const gain = audioCtx.createGain();
+    osc.connect(gain); gain.connect(audioCtx.destination);
+    osc.type = 'square';
+    osc.frequency.setValueAtTime(987.77, audioCtx.currentTime);
+    osc.frequency.setValueAtTime(1318.51, audioCtx.currentTime + 0.08);
+    gain.gain.setValueAtTime(0.1, audioCtx.currentTime);
+    gain.gain.setValueAtTime(0.3, audioCtx.currentTime + 0.08);
+    gain.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.3);
+    osc.start(); osc.stop(audioCtx.currentTime + 0.3);
+}
+
+// === 3. SISTEMA DE TEMAS ===
+const themeSelect = document.getElementById('themeSelect');
+const savedTheme = localStorage.getItem('appTheme') || 'banco';
+document.documentElement.setAttribute('data-theme', savedTheme);
+themeSelect.value = savedTheme;
+
+themeSelect.addEventListener('change', (e) => {
+    document.documentElement.setAttribute('data-theme', e.target.value);
+    localStorage.setItem('appTheme', e.target.value);
+});
+
+// === 4. RESPALDO AUTOMÁTICO LOCAL ===
+async function triggerAutoBackup() {
+    try {
+        const goalsSnap = await db.collection("goals").get();
+        const movesSnap = await db.collection("movements").get();
         
-        firebase.initializeApp(firebaseConfig);
-        const db = firebase.firestore();
-
-        // === 2. SISTEMA DE TEMAS ===
-        const themeSelect = document.getElementById('themeSelect');
-        const savedTheme = localStorage.getItem('appTheme') || 'banco';
-        document.documentElement.setAttribute('data-theme', savedTheme);
-        themeSelect.value = savedTheme;
-
-        themeSelect.addEventListener('change', (e) => {
-            document.documentElement.setAttribute('data-theme', e.target.value);
-            localStorage.setItem('appTheme', e.target.value);
-        });
-
-        // === 3. RESPALDO AUTOMÁTICO LOCAL ===
-        // Guarda un snapshot de TODO cada vez que hay una escritura
-        async function triggerAutoBackup() {
-            try {
-                const goalsSnap = await db.collection("goals").get();
-                const movesSnap = await db.collection("movements").get();
-                
-                const backup = {
-                    goals: goalsSnap.docs.map(d => ({id: d.id, ...d.data()})),
-                    movements: movesSnap.docs.map(d => ({id: d.id, ...d.data()})),
-                    timestamp: new Date().toISOString()
-                };
-                localStorage.setItem('auto_backup_ahorros', JSON.stringify(backup));
-                console.log("Respaldo automático local guardado.");
-            } catch(e) { console.error("Error en auto-respaldo", e); }
-        }
-
-        // === 4. LÓGICA DE PAGOS (NÚMEROS CERRADOS) ===
-        function calculatePayments(totalAmount, deadlineDate, startDate = new Date()) {
-            const start = new Date(startDate); start.setHours(0,0,0,0);
-            const end = new Date(deadlineDate); end.setDate(end.getDate() + 1); end.setHours(0,0,0,0);
-            if (end <= start) return { count: 0, amountPerPayment: totalAmount };
-            
-            let count = 0;
-            let current = new Date(start); current.setDate(current.getDate() + 1);
-            while (current <= end) {
-                if (current.getDate() === 1 || current.getDate() === 15) count++;
-                current.setDate(current.getDate() + 1);
-            }
-            // AQUÍ REDONDEAMOS HACIA ARRIBA A NÚMERO CERRADO
-            const amount = count > 0 ? Math.ceil(totalAmount / count) : totalAmount;
-            return { count, amountPerPayment: amount };
-        }
-
-        // === 5. REGISTRO DE MOVIMIENTOS ===
-        async function logMovement(title, amount, type) {
-            await db.collection("movements").add({
-                title: title,
-                amount: amount,
-                type: type, // 'in' (pago realizado) o 'out' (meta creada)
-                date: new Date().toISOString()
-            });
-            triggerAutoBackup();
-        }
-
-        // === 6. INTERFAZ Y FIREBASE REALTIME ===
-        const mxn = new Intl.NumberFormat('es-MX', { style: 'currency', currency: 'MXN', maximumFractionDigits: 0 });
-        let currentGoal = null;
-
-        // Escuchar Metas
-        db.collection("goals").orderBy("createdAt", "desc").onSnapshot(snapshot => {
-            const list = document.getElementById('goalList');
-            document.getElementById('skeletonLoader').style.display = 'none'; // Ocultar Skeleton
-            list.innerHTML = '';
-            
-            snapshot.forEach(doc => {
-                const goal = { id: doc.id, ...doc.data() };
-                const reqPayments = goal.totalPayments === 0 ? 1 : goal.totalPayments;
-                const percentage = Math.min((goal.paidCount / reqPayments) * 100, 100);
-                
-                const el = document.createElement('div');
-                el.className = 'goal-item';
-                el.style.setProperty('--card-color', goal.color);
-                el.onclick = () => openCheckin(goal);
-                
-                el.innerHTML = `
-                    <div class="goal-header">
-                        <span class="goal-title">${goal.name}</span>
-                        <span class="goal-amount">${mxn.format(goal.amount)}</span>
-                    </div>
-                    <div class="progress-wrapper">
-                        <div class="progress-fill" style="width: ${percentage}%"></div>
-                    </div>
-                    <div class="progress-text">${goal.paidCount} / ${reqPayments} pagos completados</div>
-                `;
-                list.appendChild(el);
-            });
-        });
-
-        // Escuchar Movimientos
-        db.collection("movements").orderBy("date", "desc").limit(10).onSnapshot(snapshot => {
-            const list = document.getElementById('movementsList');
-            list.innerHTML = '';
-            if(snapshot.empty) list.innerHTML = '<p style="text-align:center; font-size:0.9rem;">No hay movimientos aún</p>';
-            
-            snapshot.forEach(doc => {
-                const mov = doc.data();
-                const d = new Date(mov.date);
-                const isPos = mov.type === 'in';
-                const sign = isPos ? '+' : '-';
-                const cssClass = isPos ? 'mov-positive' : 'mov-negative';
-                
-                list.innerHTML += `
-                    <div class="movement-item">
-                        <div>
-                            <strong>${mov.title}</strong>
-                            <span class="mov-date">${d.toLocaleDateString()} ${d.toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})}</span>
-                        </div>
-                        <span class="${cssClass}">${sign}${mxn.format(mov.amount)}</span>
-                    </div>
-                `;
-            });
-        });
-
-        // === 7. MANEJO DE MODALES Y FORMULARIOS ===
-        const openModal = (id) => document.getElementById(id).style.display = 'flex';
-        const closeModal = (id) => document.getElementById(id).style.display = 'none';
-
-        document.getElementById('btnAdd').onclick = () => openModal('addModal');
-        document.getElementById('btnConfig').onclick = () => openModal('configModal');
-
-        // Agregar Meta
-        document.getElementById('goalForm').onsubmit = async (e) => {
-            e.preventDefault();
-            const amount = parseFloat(document.getElementById('amount').value);
-            const deadline = document.getElementById('deadline').value;
-            const pData = calculatePayments(amount, deadline);
-
-            const newGoal = {
-                name: document.getElementById('name').value,
-                amount: amount,
-                deadline: deadline,
-                color: document.getElementById('cardColor').value,
-                totalPayments: pData.count,
-                amountPerPayment: pData.amountPerPayment,
-                paidCount: 0,
-                createdAt: new Date().toISOString()
-            };
-
-            await db.collection("goals").add(newGoal);
-            await logMovement(`Suscripción Creada: ${newGoal.name}`, newGoal.amount, 'out');
-            
-            closeModal('addModal');
-            document.getElementById('goalForm').reset();
-            confetti({ particleCount: 50, spread: 60 });
+        const backup = {
+            goals: goalsSnap.docs.map(d => ({id: d.id, ...d.data()})),
+            movements: movesSnap.docs.map(d => ({id: d.id, ...d.data()})),
+            timestamp: new Date().toISOString()
         };
+        localStorage.setItem('auto_backup_ahorros', JSON.stringify(backup));
+        console.log("Respaldo automático local guardado.");
+    } catch(e) { console.error("Error en auto-respaldo", e); }
+}
 
-        // Abrir Checkin
-        function openCheckin(goal) {
-            currentGoal = goal;
-            document.getElementById('ciTitle').innerText = goal.name;
-            document.getElementById('ciAmount').innerText = mxn.format(goal.amountPerPayment);
-            
-            const reqPayments = goal.totalPayments === 0 ? 1 : goal.totalPayments;
-            const btn = document.getElementById('btnMakeCheckin');
-            
-            if(goal.paidCount >= reqPayments) {
-                btn.innerText = "¡Meta Completada!";
-                btn.disabled = true;
-                btn.style.backgroundColor = "var(--tertiary)";
-            } else {
-                btn.innerText = "💰 Registrar Pago";
-                btn.disabled = false;
-                btn.style.backgroundColor = "var(--primary)";
-            }
-            openModal('checkinModal');
-        }
+// === 5. LÓGICA DE PAGOS (NÚMEROS CERRADOS) ===
+function calculatePayments(totalAmount, deadlineDate, startDate = new Date()) {
+    const start = new Date(startDate); start.setHours(0,0,0,0);
+    const end = new Date(deadlineDate); end.setDate(end.getDate() + 1); end.setHours(0,0,0,0);
+    if (end <= start) return { count: 0, amountPerPayment: totalAmount };
+    
+    let count = 0;
+    let current = new Date(start); current.setDate(current.getDate() + 1);
+    while (current <= end) {
+        if (current.getDate() === 1 || current.getDate() === 15) count++;
+        current.setDate(current.getDate() + 1);
+    }
+    const amount = count > 0 ? Math.ceil(totalAmount / count) : totalAmount;
+    return { count, amountPerPayment: amount };
+}
 
-        // Hacer Checkin
-        document.getElementById('btnMakeCheckin').onclick = async () => {
-            if(!currentGoal) return;
-            const newCount = currentGoal.paidCount + 1;
-            
-            await db.collection("goals").doc(currentGoal.id).update({ paidCount: newCount });
-            await logMovement(`Abono: ${currentGoal.name}`, currentGoal.amountPerPayment, 'in');
-            
-            confetti({ particleCount: 100, spread: 70, origin: { y: 0.6 } });
-            closeModal('checkinModal');
-        };
+// === 6. REGISTRO DE MOVIMIENTOS ===
+async function logMovement(title, amount, type) {
+    await db.collection("movements").add({
+        title: title,
+        amount: amount,
+        type: type,
+        date: new Date().toISOString()
+    });
+    triggerAutoBackup();
+}
 
-        // Borrar Meta
-        document.getElementById('btnDeleteGoal').onclick = async () => {
-            if(confirm("¿Estás seguro de eliminar esta suscripción?")) {
-                await db.collection("goals").doc(currentGoal.id).delete();
-                await logMovement(`Suscripción Eliminada: ${currentGoal.name}`, 0, 'out');
-                closeModal('checkinModal');
-            }
-        };
+// === 7. INTERFAZ Y FIREBASE REALTIME ===
+const mxn = new Intl.NumberFormat('es-MX', { style: 'currency', currency: 'MXN', maximumFractionDigits: 0 });
+let currentGoal = null;
 
-        // Restaurar Backup Local
-        document.getElementById('btnRestoreLocal').onclick = () => {
-            const dataStr = localStorage.getItem('auto_backup_ahorros');
-            if(!dataStr) return alert("No hay respaldos locales disponibles.");
-            if(confirm("Esto reescribirá la base de datos de Firebase con tus datos locales. ¿Continuar?")) {
-                const data = JSON.parse(dataStr);
-                // Aquí iría un loop subiendo data.goals y data.movements a Firebase.
-                // Por seguridad del script, requeriría un Batch write de Firestore.
-                alert("Respaldo detectado del: " + new Date(data.timestamp).toLocaleString() + "\n(Lógica de restauración lista en consola)");
-                console.log(data);
-            }
-        };
+db.collection("goals").orderBy("createdAt", "desc").onSnapshot(snapshot => {
+    const list = document.getElementById('goalList');
+    document.getElementById('skeletonLoader').style.display = 'none';
+    list.innerHTML = '';
+    
+    snapshot.forEach(doc => {
+        const goal = { id: doc.id, ...doc.data() };
+        const reqPayments = goal.totalPayments === 0 ? 1 : goal.totalPayments;
+        const percentage = Math.min((goal.paidCount / reqPayments) * 100, 100);
         
-        // PWA Service Worker Registration
-        if ('serviceWorker' in navigator) {
-            window.addEventListener('load', () => {
-                navigator.serviceWorker.register('sw.js').then(reg => {
-                    console.log('Service Worker registrado', reg);
-                }).catch(err => console.log('Error SW', err));
-            });
-        }
+        const el = document.createElement('div');
+        el.className = 'goal-item';
+        el.style.setProperty('--card-color', goal.color);
+        el.onclick = () => openCheckin(goal);
+        
+        el.innerHTML = `
+            <div class="goal-header">
+                <span class="goal-title">${goal.name}</span>
+                <span class="goal-amount">${mxn.format(goal.amount)}</span>
+            </div>
+            <div class="progress-wrapper">
+                <div class="progress-fill" style="width: ${percentage}%"></div>
+            </div>
+            <div class="progress-text">${goal.paidCount} / ${reqPayments} pagos completados</div>
+        `;
+        list.appendChild(el);
+    });
+});
+
+db.collection("movements").orderBy("date", "desc").limit(10).onSnapshot(snapshot => {
+    const list = document.getElementById('movementsList');
+    list.innerHTML = '';
+    if(snapshot.empty) list.innerHTML = '<p style="text-align:center; font-size:0.9rem;">No hay movimientos aún</p>';
+    
+    snapshot.forEach(doc => {
+        const mov = doc.data();
+        const d = new Date(mov.date);
+        const isPos = mov.type === 'in';
+        const sign = isPos ? '+' : '-';
+        const cssClass = isPos ? 'mov-positive' : 'mov-negative';
+        
+        list.innerHTML += `
+            <div class="movement-item">
+                <div>
+                    <strong>${mov.title}</strong>
+                    <span class="mov-date">${d.toLocaleDateString()} ${d.toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})}</span>
+                </div>
+                <span class="${cssClass}">${sign}${mxn.format(mov.amount)}</span>
+            </div>
+        `;
+    });
+});
+
+// === 8. MANEJO DE MODALES Y FORMULARIOS ===
+const openModal = (id) => document.getElementById(id).style.display = 'flex';
+const closeModal = (id) => document.getElementById(id).style.display = 'none';
+
+document.getElementById('btnAdd').onclick = () => openModal('addModal');
+document.getElementById('btnConfig').onclick = () => openModal('configModal');
+
+// Agregar Meta
+document.getElementById('goalForm').onsubmit = async (e) => {
+    e.preventDefault();
+    const amount = parseFloat(document.getElementById('amount').value);
+    const deadline = document.getElementById('deadline').value;
+    const pData = calculatePayments(amount, deadline);
+
+    const newGoal = {
+        name: document.getElementById('name').value,
+        amount: amount,
+        deadline: deadline,
+        color: document.getElementById('cardColor').value,
+        totalPayments: pData.count,
+        amountPerPayment: pData.amountPerPayment,
+        paidCount: 0,
+        createdAt: new Date().toISOString()
+    };
+
+    await db.collection("goals").add(newGoal);
+    await logMovement(`Suscripción Creada: ${newGoal.name}`, newGoal.amount, 'out');
+    
+    playSuccessSound(); // ¡Sonido restaurado!
+    confetti({ particleCount: 100, spread: 70, origin: { y: 0.6 }, colors: ['#e07a5f', '#81b29a', '#f2cc8f'] }); // Confeti restaurado
+    
+    closeModal('addModal');
+    document.getElementById('goalForm').reset();
+};
+
+// Abrir Checkin
+function openCheckin(goal) {
+    currentGoal = goal;
+    document.getElementById('ciTitle').innerText = goal.name;
+    document.getElementById('ciAmount').innerText = mxn.format(goal.amountPerPayment);
+    
+    const reqPayments = goal.totalPayments === 0 ? 1 : goal.totalPayments;
+    const btn = document.getElementById('btnMakeCheckin');
+    
+    if(goal.paidCount >= reqPayments) {
+        btn.innerText = "¡Meta Completada!";
+        btn.disabled = true;
+        btn.style.backgroundColor = "var(--tertiary)";
+    } else {
+        btn.innerText = "💰 Registrar Pago";
+        btn.disabled = false;
+        btn.style.backgroundColor = "var(--primary)";
+    }
+    openModal('checkinModal');
+}
+
+// Hacer Checkin
+document.getElementById('btnMakeCheckin').onclick = async () => {
+    if(!currentGoal) return;
+    const reqPayments = currentGoal.totalPayments === 0 ? 1 : currentGoal.totalPayments;
+    const newCount = currentGoal.paidCount + 1;
+    
+    await db.collection("goals").doc(currentGoal.id).update({ paidCount: newCount });
+    await logMovement(`Abono: ${currentGoal.name}`, currentGoal.amountPerPayment, 'in');
+    
+    playCoinSound(); // ¡Sonido de moneda restaurado!
+    
+    if (newCount >= reqPayments) {
+        // Explosión grande si completas la meta
+        confetti({ particleCount: 200, spread: 100, origin: { y: 0.5 } });
+    } else {
+        // Explosión pequeña por un check-in normal
+        confetti({ particleCount: 40, spread: 50, origin: { y: 0.7 }, colors: ['#f2cc8f'] });
+    }
+    
+    closeModal('checkinModal');
+};
+
+// Borrar Meta
+document.getElementById('btnDeleteGoal').onclick = async () => {
+    if(confirm("¿Estás seguro de eliminar esta suscripción?")) {
+        await db.collection("goals").doc(currentGoal.id).delete();
+        await logMovement(`Suscripción Eliminada: ${currentGoal.name}`, 0, 'out');
+        closeModal('checkinModal');
+    }
+};
+
+// Restaurar Backup Local
+document.getElementById('btnRestoreLocal').onclick = () => {
+    const dataStr = localStorage.getItem('auto_backup_ahorros');
+    if(!dataStr) return alert("No hay respaldos locales disponibles.");
+    if(confirm("Esto reescribirá la base de datos de Firebase con tus datos locales. ¿Continuar?")) {
+        const data = JSON.parse(dataStr);
+        alert("Respaldo detectado del: " + new Date(data.timestamp).toLocaleString() + "\n(Lógica de restauración lista en consola)");
+        console.log(data);
+    }
+};
+
+// PWA Service Worker Registration
+if ('serviceWorker' in navigator) {
+    window.addEventListener('load', () => {
+        navigator.serviceWorker.register('sw.js').then(reg => {
+            console.log('Service Worker registrado', reg);
+        }).catch(err => console.log('Error SW', err));
+    });
+}
     </script>
 </body>
 </html>
