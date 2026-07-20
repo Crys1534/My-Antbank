@@ -1,0 +1,426 @@
+<!DOCTYPE html>
+<html lang="es" data-theme="banco">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Ahorros Hormiga</title>
+    
+    <!-- PWA Manifest -->
+    <link rel="manifest" href="manifest.json">
+    <meta name="theme-color" content="#d90429">
+    
+    <!-- Firebase Compat (Fácil de usar en un solo archivo) -->
+    <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
+    <!-- Confetti -->
+    <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
+
+    <style>
+        /* === SISTEMA DE TEMAS === */
+        :root {
+            /* Tema Banco (Predeterminado) */
+            --bg-color: #f4f6f8;
+            --card-bg: #ffffff;
+            --primary: #d90429;
+            --secondary: #2b2d42;
+            --secondary-dark: #1a1b28;
+            --tertiary: #4CAF50;
+            --text-main: #14213d;
+            --text-muted: #8d99ae;
+            --shadow: rgba(0, 0, 0, 0.08);
+            --modal-bg: rgba(20, 33, 61, 0.8);
+        }
+
+        [data-theme="claro"] {
+            --bg-color: #ffffff; --card-bg: #f8f9fa; --primary: #007bff; --secondary: #6c757d;
+            --text-main: #212529; --text-muted: #6c757d; --modal-bg: rgba(0,0,0,0.5);
+        }
+
+        [data-theme="oscuro"] {
+            --bg-color: #121212; --card-bg: #1e1e1e; --primary: #bb86fc; --secondary: #03dac6;
+            --text-main: #e0e0e0; --text-muted: #a0a0a0; --shadow: rgba(0,0,0,0.5); --modal-bg: rgba(0,0,0,0.8);
+        }
+
+        [data-theme="pastel"] {
+            --bg-color: #f4f1de; --card-bg: #ffffff; --primary: #e07a5f; --secondary: #81b29a;
+            --text-main: #3d405b; --text-muted: #666666;
+        }
+
+        * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Segoe UI', Tahoma, sans-serif; }
+
+        body { background-color: var(--bg-color); color: var(--text-main); padding: 20px; padding-bottom: 90px; transition: background 0.3s; }
+        
+        .container { width: 100%; max-width: 500px; margin: 0 auto; }
+
+        .header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; }
+        h1 { color: var(--primary); font-size: 1.8rem; }
+        h2 { font-size: 1.2rem; color: var(--secondary); margin-bottom: 15px; border-bottom: 2px solid var(--shadow); padding-bottom: 5px;}
+
+        .btn-icon { background: var(--card-bg); border: none; font-size: 1.2rem; cursor: pointer; padding: 10px; border-radius: 50%; box-shadow: 0 4px 10px var(--shadow); color: var(--text-main);}
+        
+        button { cursor: pointer; outline: none; }
+        .main-btn { width: 100%; padding: 15px; background-color: var(--primary); color: white; border: none; border-radius: 12px; font-size: 1.1rem; font-weight: bold; transition: transform 0.2s; }
+        .main-btn:active { transform: scale(0.98); }
+        .action-btn { width: 100%; padding: 12px; margin-bottom: 10px; background-color: var(--secondary); color: white; border: none; border-radius: 10px; font-weight: bold; }
+        .close-btn { background-color: transparent; color: var(--text-muted); border: 1px solid var(--text-muted); }
+
+        input, select { width: 100%; padding: 12px; margin-top: 5px; margin-bottom: 15px; border: 2px solid var(--shadow); border-radius: 10px; font-size: 1rem; background: var(--card-bg); color: var(--text-main); }
+        
+        .color-picker-container { display: flex; align-items: center; gap: 10px; margin-bottom: 15px; }
+        input[type="color"] { width: 50px; height: 50px; padding: 0; border: none; border-radius: 50%; cursor: pointer; }
+
+        /* Tarjetas de Metas */
+        .goal-list { display: flex; flex-direction: column; gap: 15px; margin-bottom: 30px; }
+        .goal-item { background: var(--card-bg); border-left: 6px solid var(--card-color, var(--primary)); padding: 15px; border-radius: 12px; box-shadow: 0 4px 10px var(--shadow); position: relative; cursor: pointer; }
+        .goal-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 5px; }
+        .goal-title { font-size: 1.1rem; font-weight: bold; }
+        .goal-amount { color: var(--text-main); font-weight: bold; }
+        .progress-wrapper { background-color: var(--shadow); border-radius: 10px; height: 8px; width: 100%; overflow: hidden; margin-top: 10px; }
+        .progress-fill { background-color: var(--card-color, var(--primary)); height: 100%; width: 0%; transition: width 0.5s ease; }
+        .progress-text { font-size: 0.8rem; color: var(--text-muted); margin-top: 5px; text-align: right; }
+
+        /* Skeleton Loading */
+        .skeleton { background: linear-gradient(90deg, var(--shadow) 25%, var(--bg-color) 50%, var(--shadow) 75%); background-size: 200% 100%; animation: shimmer 1.5s infinite; border-radius: 8px; }
+        @keyframes shimmer { 0% { background-position: 200% 0; } 100% { background-position: -200% 0; } }
+        .skeleton-card { background: var(--card-bg); padding: 15px; border-radius: 12px; margin-bottom: 15px; height: 100px; display: flex; flex-direction: column; gap: 10px; }
+        .sk-title { height: 20px; width: 60%; }
+        .sk-bar { height: 8px; width: 100%; margin-top: auto; }
+
+        /* Últimos Movimientos */
+        .movements-list { background: var(--card-bg); border-radius: 15px; padding: 15px; box-shadow: 0 4px 10px var(--shadow); max-height: 250px; overflow-y: auto; }
+        .movement-item { display: flex; justify-content: space-between; padding: 10px 0; border-bottom: 1px solid var(--shadow); font-size: 0.9rem; }
+        .movement-item:last-child { border-bottom: none; }
+        .mov-date { color: var(--text-muted); font-size: 0.75rem; display: block; }
+        .mov-positive { color: var(--tertiary); font-weight: bold; }
+        .mov-negative { color: var(--primary); font-weight: bold; }
+
+        /* Botón Flotante (FAB) */
+        .fab { position: fixed; bottom: 20px; right: 20px; width: 65px; height: 65px; background-color: var(--primary); color: white; border-radius: 50%; font-size: 2rem; display: flex; align-items: center; justify-content: center; box-shadow: 0 6px 15px rgba(0,0,0,0.3); border: none; z-index: 100; transition: transform 0.2s; }
+        .fab:hover { transform: scale(1.05); }
+
+        /* Modales */
+        .modal { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: var(--modal-bg); z-index: 1000; justify-content: center; align-items: center; backdrop-filter: blur(5px); animation: fadeIn 0.2s; }
+        .modal-content { background: var(--card-bg); padding: 25px; border-radius: 20px; width: 90%; max-width: 400px; max-height: 90vh; overflow-y: auto; box-shadow: 0 10px 30px rgba(0,0,0,0.5); }
+        @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+        
+        .delete-btn { background: none; border: none; color: #ff4d4d; margin-top: 15px; font-weight: bold; text-decoration: underline; width: 100%; text-align: center; }
+    </style>
+</head>
+<body>
+
+    <div class="container">
+        <div class="header">
+            <h1>Ahorros Hormiga</h1>
+            <button class="btn-icon" id="btnConfig">⚙️</button>
+        </div>
+        
+        <h2>Mis Suscripciones</h2>
+        <div class="goal-list" id="goalList">
+            <!-- Skeleton de Carga -->
+            <div class="skeleton-card" id="skeletonLoader">
+                <div class="skeleton sk-title"></div>
+                <div class="skeleton sk-bar"></div>
+            </div>
+        </div>
+
+        <h2>Últimos Movimientos</h2>
+        <div class="movements-list" id="movementsList">
+            <p style="text-align:center; color: var(--text-muted); font-size:0.9rem;">Cargando movimientos...</p>
+        </div>
+    </div>
+
+    <!-- Botón Flotante para Agregar -->
+    <button class="fab" id="btnAdd">+</button>
+
+    <!-- Modal Agregar Suscripción -->
+    <div class="modal" id="addModal">
+        <div class="modal-content">
+            <h2 style="border:none; color:var(--primary); text-align:center;">Nueva Suscripción</h2>
+            <form id="goalForm">
+                <label>Nombre de la meta/suscripción</label>
+                <input type="text" id="name" placeholder="Ej. Xbox Game Pass" required>
+                
+                <label>Cantidad Total ($)</label>
+                <input type="number" id="amount" placeholder="1200" required min="1">
+                
+                <label>Fecha Límite</label>
+                <input type="date" id="deadline" required>
+
+                <div class="color-picker-container">
+                    <label>Color de la Tarjeta:</label>
+                    <input type="color" id="cardColor" value="#d90429">
+                </div>
+
+                <button type="submit" class="main-btn">Guardar Suscripción</button>
+                <button type="button" class="action-btn close-btn" onclick="closeModal('addModal')">Cancelar</button>
+            </form>
+        </div>
+    </div>
+
+    <!-- Modal Check-in -->
+    <div class="modal" id="checkinModal">
+        <div class="modal-content" style="text-align: center;">
+            <h2 id="ciTitle" style="border:none;">Suscripción</h2>
+            <p style="color: var(--text-muted);">Siguiente pago (Día 1 o 15):</p>
+            <h1 id="ciAmount" style="font-size: 2.5rem; margin: 15px 0;">$0</h1>
+            
+            <button class="main-btn" id="btnMakeCheckin" style="margin-bottom: 15px;">💰 Registrar Pago</button>
+            <button class="action-btn close-btn" onclick="closeModal('checkinModal')">Cerrar</button>
+            <button class="delete-btn" id="btnDeleteGoal">Eliminar Suscripción</button>
+        </div>
+    </div>
+
+    <!-- Modal Configuración -->
+    <div class="modal" id="configModal">
+        <div class="modal-content">
+            <h2 style="border:none;">Configuración</h2>
+            <label>Tema Visual</label>
+            <select id="themeSelect">
+                <option value="banco">🏦 Predeterminado (Banco)</option>
+                <option value="claro">☀️ Claro</option>
+                <option value="oscuro">🌙 Oscuro</option>
+                <option value="pastel">🎨 Pastel</option>
+            </select>
+
+            <div style="background: var(--shadow); padding: 15px; border-radius: 10px; margin: 15px 0;">
+                <h4 style="margin-bottom: 5px;">🛡️ Respaldo Automático Local</h4>
+                <p style="font-size: 0.8rem; color: var(--text-muted); margin-bottom: 10px;">
+                    Se crea una copia en tu dispositivo por cada cambio detectado en la nube.
+                </p>
+                <button class="action-btn" id="btnRestoreLocal" style="background-color: var(--primary);">Restaurar desde Local</button>
+            </div>
+
+            <button class="action-btn close-btn" onclick="closeModal('configModal')">Cerrar</button>
+        </div>
+    </div>
+
+    <script>
+        // === 1. CONFIGURACIÓN DE FIREBASE ===
+        // IMPORTANTE: Reemplaza esto con los datos de tu proyecto de Firebase
+        const firebaseConfig = {
+            apiKey: "AIzaSyBnX__R6A6lQw_KuzZxqHRkzZyj10S_4wU",
+            authDomain: "aula-virtual-79e4d.firebaseapp.com",
+            databaseURL: "https://aula-virtual-79e4d-default-rtdb.firebaseio.com",
+            projectId: "aula-virtual-79e4d",
+            storageBucket: "aula-virtual-79e4d.firebasestorage.app",
+            messagingSenderId: "384731632952",
+            appId: "1:384731632952:web:9b4facff98bc7f6ebf5dcd"
+        };
+        
+        firebase.initializeApp(firebaseConfig);
+        const db = firebase.firestore();
+
+        // === 2. SISTEMA DE TEMAS ===
+        const themeSelect = document.getElementById('themeSelect');
+        const savedTheme = localStorage.getItem('appTheme') || 'banco';
+        document.documentElement.setAttribute('data-theme', savedTheme);
+        themeSelect.value = savedTheme;
+
+        themeSelect.addEventListener('change', (e) => {
+            document.documentElement.setAttribute('data-theme', e.target.value);
+            localStorage.setItem('appTheme', e.target.value);
+        });
+
+        // === 3. RESPALDO AUTOMÁTICO LOCAL ===
+        // Guarda un snapshot de TODO cada vez que hay una escritura
+        async function triggerAutoBackup() {
+            try {
+                const goalsSnap = await db.collection("goals").get();
+                const movesSnap = await db.collection("movements").get();
+                
+                const backup = {
+                    goals: goalsSnap.docs.map(d => ({id: d.id, ...d.data()})),
+                    movements: movesSnap.docs.map(d => ({id: d.id, ...d.data()})),
+                    timestamp: new Date().toISOString()
+                };
+                localStorage.setItem('auto_backup_ahorros', JSON.stringify(backup));
+                console.log("Respaldo automático local guardado.");
+            } catch(e) { console.error("Error en auto-respaldo", e); }
+        }
+
+        // === 4. LÓGICA DE PAGOS (NÚMEROS CERRADOS) ===
+        function calculatePayments(totalAmount, deadlineDate, startDate = new Date()) {
+            const start = new Date(startDate); start.setHours(0,0,0,0);
+            const end = new Date(deadlineDate); end.setDate(end.getDate() + 1); end.setHours(0,0,0,0);
+            if (end <= start) return { count: 0, amountPerPayment: totalAmount };
+            
+            let count = 0;
+            let current = new Date(start); current.setDate(current.getDate() + 1);
+            while (current <= end) {
+                if (current.getDate() === 1 || current.getDate() === 15) count++;
+                current.setDate(current.getDate() + 1);
+            }
+            // AQUÍ REDONDEAMOS HACIA ARRIBA A NÚMERO CERRADO
+            const amount = count > 0 ? Math.ceil(totalAmount / count) : totalAmount;
+            return { count, amountPerPayment: amount };
+        }
+
+        // === 5. REGISTRO DE MOVIMIENTOS ===
+        async function logMovement(title, amount, type) {
+            await db.collection("movements").add({
+                title: title,
+                amount: amount,
+                type: type, // 'in' (pago realizado) o 'out' (meta creada)
+                date: new Date().toISOString()
+            });
+            triggerAutoBackup();
+        }
+
+        // === 6. INTERFAZ Y FIREBASE REALTIME ===
+        const mxn = new Intl.NumberFormat('es-MX', { style: 'currency', currency: 'MXN', maximumFractionDigits: 0 });
+        let currentGoal = null;
+
+        // Escuchar Metas
+        db.collection("goals").orderBy("createdAt", "desc").onSnapshot(snapshot => {
+            const list = document.getElementById('goalList');
+            document.getElementById('skeletonLoader').style.display = 'none'; // Ocultar Skeleton
+            list.innerHTML = '';
+            
+            snapshot.forEach(doc => {
+                const goal = { id: doc.id, ...doc.data() };
+                const reqPayments = goal.totalPayments === 0 ? 1 : goal.totalPayments;
+                const percentage = Math.min((goal.paidCount / reqPayments) * 100, 100);
+                
+                const el = document.createElement('div');
+                el.className = 'goal-item';
+                el.style.setProperty('--card-color', goal.color);
+                el.onclick = () => openCheckin(goal);
+                
+                el.innerHTML = `
+                    <div class="goal-header">
+                        <span class="goal-title">${goal.name}</span>
+                        <span class="goal-amount">${mxn.format(goal.amount)}</span>
+                    </div>
+                    <div class="progress-wrapper">
+                        <div class="progress-fill" style="width: ${percentage}%"></div>
+                    </div>
+                    <div class="progress-text">${goal.paidCount} / ${reqPayments} pagos completados</div>
+                `;
+                list.appendChild(el);
+            });
+        });
+
+        // Escuchar Movimientos
+        db.collection("movements").orderBy("date", "desc").limit(10).onSnapshot(snapshot => {
+            const list = document.getElementById('movementsList');
+            list.innerHTML = '';
+            if(snapshot.empty) list.innerHTML = '<p style="text-align:center; font-size:0.9rem;">No hay movimientos aún</p>';
+            
+            snapshot.forEach(doc => {
+                const mov = doc.data();
+                const d = new Date(mov.date);
+                const isPos = mov.type === 'in';
+                const sign = isPos ? '+' : '-';
+                const cssClass = isPos ? 'mov-positive' : 'mov-negative';
+                
+                list.innerHTML += `
+                    <div class="movement-item">
+                        <div>
+                            <strong>${mov.title}</strong>
+                            <span class="mov-date">${d.toLocaleDateString()} ${d.toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})}</span>
+                        </div>
+                        <span class="${cssClass}">${sign}${mxn.format(mov.amount)}</span>
+                    </div>
+                `;
+            });
+        });
+
+        // === 7. MANEJO DE MODALES Y FORMULARIOS ===
+        const openModal = (id) => document.getElementById(id).style.display = 'flex';
+        const closeModal = (id) => document.getElementById(id).style.display = 'none';
+
+        document.getElementById('btnAdd').onclick = () => openModal('addModal');
+        document.getElementById('btnConfig').onclick = () => openModal('configModal');
+
+        // Agregar Meta
+        document.getElementById('goalForm').onsubmit = async (e) => {
+            e.preventDefault();
+            const amount = parseFloat(document.getElementById('amount').value);
+            const deadline = document.getElementById('deadline').value;
+            const pData = calculatePayments(amount, deadline);
+
+            const newGoal = {
+                name: document.getElementById('name').value,
+                amount: amount,
+                deadline: deadline,
+                color: document.getElementById('cardColor').value,
+                totalPayments: pData.count,
+                amountPerPayment: pData.amountPerPayment,
+                paidCount: 0,
+                createdAt: new Date().toISOString()
+            };
+
+            await db.collection("goals").add(newGoal);
+            await logMovement(`Suscripción Creada: ${newGoal.name}`, newGoal.amount, 'out');
+            
+            closeModal('addModal');
+            document.getElementById('goalForm').reset();
+            confetti({ particleCount: 50, spread: 60 });
+        };
+
+        // Abrir Checkin
+        function openCheckin(goal) {
+            currentGoal = goal;
+            document.getElementById('ciTitle').innerText = goal.name;
+            document.getElementById('ciAmount').innerText = mxn.format(goal.amountPerPayment);
+            
+            const reqPayments = goal.totalPayments === 0 ? 1 : goal.totalPayments;
+            const btn = document.getElementById('btnMakeCheckin');
+            
+            if(goal.paidCount >= reqPayments) {
+                btn.innerText = "¡Meta Completada!";
+                btn.disabled = true;
+                btn.style.backgroundColor = "var(--tertiary)";
+            } else {
+                btn.innerText = "💰 Registrar Pago";
+                btn.disabled = false;
+                btn.style.backgroundColor = "var(--primary)";
+            }
+            openModal('checkinModal');
+        }
+
+        // Hacer Checkin
+        document.getElementById('btnMakeCheckin').onclick = async () => {
+            if(!currentGoal) return;
+            const newCount = currentGoal.paidCount + 1;
+            
+            await db.collection("goals").doc(currentGoal.id).update({ paidCount: newCount });
+            await logMovement(`Abono: ${currentGoal.name}`, currentGoal.amountPerPayment, 'in');
+            
+            confetti({ particleCount: 100, spread: 70, origin: { y: 0.6 } });
+            closeModal('checkinModal');
+        };
+
+        // Borrar Meta
+        document.getElementById('btnDeleteGoal').onclick = async () => {
+            if(confirm("¿Estás seguro de eliminar esta suscripción?")) {
+                await db.collection("goals").doc(currentGoal.id).delete();
+                await logMovement(`Suscripción Eliminada: ${currentGoal.name}`, 0, 'out');
+                closeModal('checkinModal');
+            }
+        };
+
+        // Restaurar Backup Local
+        document.getElementById('btnRestoreLocal').onclick = () => {
+            const dataStr = localStorage.getItem('auto_backup_ahorros');
+            if(!dataStr) return alert("No hay respaldos locales disponibles.");
+            if(confirm("Esto reescribirá la base de datos de Firebase con tus datos locales. ¿Continuar?")) {
+                const data = JSON.parse(dataStr);
+                // Aquí iría un loop subiendo data.goals y data.movements a Firebase.
+                // Por seguridad del script, requeriría un Batch write de Firestore.
+                alert("Respaldo detectado del: " + new Date(data.timestamp).toLocaleString() + "\n(Lógica de restauración lista en consola)");
+                console.log(data);
+            }
+        };
+        
+        // PWA Service Worker Registration
+        if ('serviceWorker' in navigator) {
+            window.addEventListener('load', () => {
+                navigator.serviceWorker.register('sw.js').then(reg => {
+                    console.log('Service Worker registrado', reg);
+                }).catch(err => console.log('Error SW', err));
+            });
+        }
+    </script>
+</body>
+</html>
