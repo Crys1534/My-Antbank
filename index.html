@@ -62,6 +62,11 @@
         .goal-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 5px; }
         .goal-title { font-size: 1.1rem; font-weight: bold; }
         .goal-amount { color: var(--text-main); font-weight: bold; }
+        
+        /* NUEVAS CLASES PARA EL TEXTO GIGANTE DEL PAGO */
+        .next-payment { font-size: 2rem; font-weight: bold; margin: 8px 0; display: flex; align-items: baseline; gap: 8px; }
+        .next-payment-label { font-size: 0.9rem; color: var(--text-muted); font-weight: normal; }
+        
         .progress-wrapper { background-color: var(--shadow); border-radius: 10px; height: 8px; width: 100%; overflow: hidden; margin-top: 10px; }
         .progress-fill { background-color: var(--card-color, var(--primary)); height: 100%; width: 0%; transition: width 0.5s ease; }
         .progress-text { font-size: 0.8rem; color: var(--text-muted); margin-top: 5px; text-align: right; font-weight: bold;}
@@ -78,7 +83,6 @@
 
         .modal { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: var(--modal-bg); z-index: 1000; justify-content: center; align-items: center; backdrop-filter: blur(5px); animation: fadeIn 0.2s; }
         
-        /* DISEÑO DUAL PANE PARA EL MODAL DE CHECKIN */
         .modal-content { background: var(--card-bg); padding: 25px; border-radius: 20px; width: 90%; max-width: 400px; max-height: 90vh; overflow-y: auto; box-shadow: 0 10px 30px rgba(0,0,0,0.5); }
         .modal-content.dual-pane { max-width: 700px; display: flex; flex-direction: column; gap: 20px; }
         .pane-left, .pane-right { flex: 1; display: flex; flex-direction: column; }
@@ -94,7 +98,6 @@
         @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
         .delete-btn { background: none; border: none; color: #ff4d4d; margin-top: 15px; font-weight: bold; text-decoration: underline; width: 100%; text-align: center; }
         
-        /* Contenedor de botones en el Dialog Nativo */
         .dialog-buttons { display: flex; gap: 10px; margin-top: 20px; }
     </style>
 </head>
@@ -151,8 +154,6 @@
     <!-- Modal Check-in con Panel Doble -->
     <div class="modal" id="checkinModal">
         <div class="modal-content dual-pane">
-            
-            <!-- Izquierda: Acción de Pago -->
             <div class="pane-left" style="text-align: center;">
                 <h2 id="ciTitle" style="border:none;">Suscripción</h2>
                 <p style="color: var(--text-muted);">Siguiente pago (Día 1 o 15):</p>
@@ -162,15 +163,12 @@
                 <button class="action-btn close-btn" onclick="closeModal('checkinModal')">Cerrar</button>
                 <button class="delete-btn" id="btnDeleteGoal">Eliminar Suscripción</button>
             </div>
-
-            <!-- Derecha: Historial individual -->
             <div class="pane-right">
                 <h3 style="color: var(--secondary); font-size: 1.1rem; border-bottom: 1px solid var(--shadow); padding-bottom: 5px;">Historial de esta meta</h3>
                 <div id="ciHistoryList" class="history-list">
                     <p style="text-align:center; color: var(--text-muted); font-size:0.9rem;">Cargando...</p>
                 </div>
             </div>
-
         </div>
     </div>
 
@@ -186,19 +184,16 @@
                 <option value="pastel">🎨 Pastel</option>
             </select>
 
-            <!-- SISTEMA DE RESPALDOS -->
             <div style="background: var(--shadow); padding: 15px; border-radius: 10px; margin: 15px 0;">
                 <h4 style="margin-bottom: 5px;">🕰️ Máquina del Tiempo</h4>
                 <p style="font-size: 0.8rem; color: var(--text-muted); margin-bottom: 10px;">
                     Restaura la nube a una versión anterior.
                 </p>
                 <select id="backupSelect" style="font-size: 0.85rem; margin-bottom: 10px;">
-                    <!-- Versiones -->
                 </select>
                 <button class="action-btn" id="btnRestoreLocal" style="background-color: var(--primary);">Restaurar Versión</button>
             </div>
 
-            <!-- BOTÓN DE EMPEZAR DE 0 -->
             <div style="background: rgba(217, 4, 41, 0.1); padding: 15px; border-radius: 10px; margin: 15px 0; border: 1px solid var(--primary);">
                 <h4 style="margin-bottom: 5px; color: var(--primary);">⚠️ Zona de Peligro</h4>
                 <p style="font-size: 0.8rem; color: var(--text-muted); margin-bottom: 10px;">
@@ -211,7 +206,7 @@
         </div>
     </div>
 
-    <!-- NUEVO: Modal Nativo de Diálogos (Reemplaza a alert y confirm) -->
+    <!-- Modal Nativo de Diálogos -->
     <div class="modal" id="customDialogModal" style="z-index: 2000;">
         <div class="modal-content" style="text-align: center; max-width: 350px;">
             <h2 id="dialogTitle" style="border:none; color: var(--text-main);">Atención</h2>
@@ -339,24 +334,31 @@
         let currentGoal = null;
         let unsubscribeHistory = null;
 
-        // Escuchar Metas (Migrado a "Dinero Guardado" en vez de "Conteo de Pagos")
         db.collection("goals").orderBy("createdAt", "desc").onSnapshot(snapshot => {
             const loading = document.getElementById('loadingText');
             if (loading) loading.remove();
 
             snapshot.docChanges().forEach(change => {
-                // Compatible con metas viejas (si existieran), pero asume la nueva estructura basada en dinero
                 const data = change.doc.data();
                 const goal = { 
                     id: change.doc.id, 
                     ...data,
-                    // Si es una meta vieja que usaba 'paidCount', la convertimos al vuelo para que no crashee
                     savedAmount: data.savedAmount !== undefined ? data.savedAmount : ((data.paidCount || 0) * data.amountPerPayment),
                     targetAmount: data.targetAmount !== undefined ? data.targetAmount : data.amount
                 };
                 
                 const percentage = Math.min((goal.savedAmount / goal.targetAmount) * 100, 100);
                 const list = document.getElementById('goalList');
+
+                // Lógica de visualización del Siguiente Pago en grande
+                const remainingToSave = goal.targetAmount - goal.savedAmount;
+                let nextPayment = goal.amountPerPayment;
+                if (nextPayment > remainingToSave) nextPayment = remainingToSave;
+                
+                let paymentDisplay = remainingToSave <= 0 
+                    ? `¡Completado! 🎉`
+                    : `${mxn.format(nextPayment)} <span class="next-payment-label">siguiente pago</span>`;
+                let paymentColor = remainingToSave <= 0 ? 'var(--tertiary)' : 'var(--text-main)';
 
                 if (change.type === "added") {
                     const el = document.createElement('div');
@@ -366,8 +368,13 @@
                     el.innerHTML = `
                         <div class="goal-header">
                             <span class="goal-title">${goal.name}</span>
-                            <span class="goal-amount">${mxn.format(goal.targetAmount)}</span>
+                            <span class="goal-amount" style="font-size: 0.9rem; color: var(--text-muted);">Meta: ${mxn.format(goal.targetAmount)}</span>
                         </div>
+                        
+                        <div class="next-payment" id="nextPayment-${goal.id}" style="color: ${paymentColor}">
+                            ${paymentDisplay}
+                        </div>
+                        
                         <div class="progress-wrapper">
                             <div class="progress-fill" style="width: 0%"></div>
                         </div>
@@ -387,10 +394,19 @@
                     const el = document.getElementById(`goal-${goal.id}`);
                     if (el) {
                         el.onclick = () => openCheckin(goal);
+                        
                         const fill = el.querySelector('.progress-fill');
                         const text = el.querySelector('.progress-text');
+                        const nextPaymentEl = document.getElementById(`nextPayment-${goal.id}`);
+                        
                         if (fill) fill.style.width = `${percentage}%`;
                         if (text) text.innerText = `Ahorrado: ${mxn.format(goal.savedAmount)} / ${mxn.format(goal.targetAmount)}`;
+                        
+                        // Actualiza el texto gigante de forma segura
+                        if (nextPaymentEl) {
+                            nextPaymentEl.innerHTML = paymentDisplay;
+                            nextPaymentEl.style.color = paymentColor;
+                        }
                     }
                 } else if (change.type === "removed") {
                     const el = document.getElementById(`goal-${goal.id}`);
@@ -429,7 +445,6 @@
         // CERRAR MODALES HACIENDO CLIC AFUERA
         window.addEventListener('click', (e) => {
             if (e.target.classList.contains('modal')) {
-                // No cerramos el de confirmación nativa haciendo clic afuera para evitar accidentes
                 if (e.target.id !== 'customDialogModal') {
                     closeModal(e.target.id);
                 }
@@ -439,7 +454,7 @@
         document.getElementById('btnAdd').onclick = () => openModal('addModal');
         document.getElementById('btnConfig').onclick = () => { refreshBackupDropdown(); openModal('configModal'); };
 
-        // SISTEMA DE DIÁLOGOS NATIVOS (Reemplaza alert y confirm)
+        // SISTEMA DE DIÁLOGOS NATIVOS
         function showDialog(title, message, type, onConfirmCallback = null) {
             document.getElementById('dialogTitle').innerText = title;
             document.getElementById('dialogMessage').innerText = message;
@@ -447,7 +462,6 @@
             const btnCancel = document.getElementById('btnCancelDialog');
             const btnAccept = document.getElementById('btnAcceptDialog');
             
-            // Reset y asignación
             btnCancel.onclick = () => closeModal('customDialogModal');
             btnAccept.onclick = () => {
                 closeModal('customDialogModal');
@@ -464,7 +478,7 @@
                 btnAccept.style.backgroundColor = 'var(--primary)';
                 document.getElementById('dialogTitle').style.color = 'var(--primary)';
                 btnAccept.innerText = 'Sí, continuar';
-            } else { // 'confirm' estándar
+            } else { 
                 btnCancel.style.display = 'block';
                 btnAccept.style.backgroundColor = 'var(--tertiary)';
                 document.getElementById('dialogTitle').style.color = 'var(--text-main)';
@@ -473,7 +487,7 @@
             openModal('customDialogModal');
         }
 
-        // Guardar Suscripción (NUEVA LÓGICA DE "DINERO YA PAGADO")
+        // Guardar Suscripción
         document.getElementById('goalForm').onsubmit = async (e) => {
             e.preventDefault();
             const btn = e.target.querySelector('button[type="submit"]');
@@ -483,24 +497,22 @@
             let prePaidMoney = parseFloat(document.getElementById('prePaidMoney').value) || 0;
             const deadline = document.getElementById('deadline').value;
 
-            // Evitar que pongan que ya pagaron más del total
             if (prePaidMoney > targetAmount) prePaidMoney = targetAmount;
 
             const remainingAmount = targetAmount - prePaidMoney;
             const pData = calculatePayments(targetAmount, deadline);
             
-            // Calculamos cuánto toca por pago basándonos EN LO QUE FALTA (rounded up)
             let amountPerPayment = targetAmount; 
             if (pData.count > 0 && remainingAmount > 0) {
                 amountPerPayment = Math.ceil(remainingAmount / pData.count);
-            } else if (remainingAmount === 0) {
-                amountPerPayment = 0; // Ya está pagado completo
+            } else if (remainingAmount <= 0) {
+                amountPerPayment = 0; 
             }
 
             const newGoal = {
                 name: document.getElementById('name').value, 
                 targetAmount: targetAmount, 
-                savedAmount: prePaidMoney, // Ahora guardamos dinero en lugar de número de pagos
+                savedAmount: prePaidMoney, 
                 deadline: deadline,
                 color: document.getElementById('cardColor').value, 
                 totalPayments: pData.count,
@@ -510,11 +522,9 @@
 
             const docRef = await db.collection("goals").add(newGoal);
             
-            // Si el usuario ingresó dinero previo, lo registramos como movimiento inicial
             if (prePaidMoney > 0) {
                 await logMovement(`Dinero Previo: ${newGoal.name}`, prePaidMoney, 'in', `Se creó: ${newGoal.name}`, docRef.id);
             } else {
-                // Solo registramos el movimiento de creación técnica para el backup
                 await triggerAutoBackup(`Se creó: ${newGoal.name}`);
             }
             
@@ -532,17 +542,19 @@
             document.getElementById('ciTitle').innerText = goal.name;
             
             const btn = document.getElementById('btnMakeCheckin');
+            const remainingToSave = goal.targetAmount - goal.savedAmount;
+            
+            let nextPayment = goal.amountPerPayment;
+            if (nextPayment > remainingToSave) nextPayment = remainingToSave;
             
             if(goal.savedAmount >= goal.targetAmount) {
                 document.getElementById('ciAmount').innerText = "Completado";
                 btn.innerText = "¡Meta Alcanzada!"; btn.disabled = true; btn.style.backgroundColor = "var(--tertiary)";
             } else {
-                // Muestra exactamente de a cuánto son los pagos
-                document.getElementById('ciAmount').innerText = mxn.format(goal.amountPerPayment);
+                document.getElementById('ciAmount').innerText = mxn.format(nextPayment);
                 btn.innerText = "💰 Registrar Pago"; btn.disabled = false; btn.style.backgroundColor = "var(--primary)";
             }
 
-            // Cargar Historial Específico en el Panel Derecho
             if (unsubscribeHistory) unsubscribeHistory();
             unsubscribeHistory = db.collection("movements")
                 .where("goalId", "==", goal.id)
@@ -576,7 +588,7 @@
             openModal('checkinModal');
         }
 
-        // Hacer Checkin (Lógica para dinero)
+        // Hacer Checkin
         document.getElementById('btnMakeCheckin').onclick = async () => {
             if(!currentGoal) return;
             
@@ -585,7 +597,6 @@
             const remainingToSave = currentGoal.targetAmount - currentGoal.savedAmount;
             let depositAmount = currentGoal.amountPerPayment;
             
-            // Si el pago regular es mayor a lo que falta, solo cobramos el restante exacto
             if (depositAmount > remainingToSave) {
                 depositAmount = remainingToSave;
             }
@@ -598,14 +609,14 @@
             playCoinSound();
             if (newSavedAmount >= currentGoal.targetAmount) {
                 confetti({ particleCount: 200, spread: 100, origin: { y: 0.5 } });
-                closeModal('checkinModal'); // Solo cerramos si ya se acabó de pagar
+                closeModal('checkinModal'); 
             } else {
                 confetti({ particleCount: 40, spread: 50, origin: { y: 0.7 }, colors: ['#f2cc8f'] });
                 document.getElementById('btnMakeCheckin').innerText = "💰 Registrar Pago";
             }
         };
 
-        // Borrar Suscripción (Con Dialog Nativo)
+        // Borrar Suscripción
         document.getElementById('btnDeleteGoal').onclick = () => {
             showDialog("Eliminar Suscripción", `¿Estás seguro de que deseas eliminar "${currentGoal.name}"? Perderás su historial.`, "danger", async () => {
                 const goalName = currentGoal.name;
@@ -616,7 +627,7 @@
             });
         };
 
-        // Restaurar Versión (Con Dialog Nativo)
+        // Restaurar Versión
         document.getElementById('btnRestoreLocal').onclick = () => {
             const select = document.getElementById('backupSelect');
             if(!select.value) return showDialog("Error", "Selecciona una versión de la lista primero.", "alert");
@@ -654,11 +665,9 @@
             });
         };
 
-        // BOTÓN: EMPEZAR DE CERO (Con Dialog Nativo)
+        // BOTÓN: EMPEZAR DE CERO
         document.getElementById('btnWipeDB').onclick = () => {
             showDialog("Zona de Peligro", "🚨 ¿ESTÁS COMPLETAMENTE SEGURO?\n\nEsto borrará todas tus suscripciones, el historial y los movimientos de la nube.", "danger", () => {
-                
-                // Doble confirmación nativa
                 setTimeout(() => {
                     showDialog("Última Advertencia", "No hay vuelta atrás. ¿Continuar y formatear la base de datos?", "danger", async () => {
                         document.getElementById('btnWipeDB').innerText = "Borrando Base de Datos...";
@@ -670,7 +679,7 @@
                             currentMoves.forEach(doc => batch.delete(doc.ref));
 
                             await batch.commit();
-                            localStorage.removeItem('ahorros_backups_list'); // Limpiar historial
+                            localStorage.removeItem('ahorros_backups_list'); 
                             
                             closeModal('configModal');
                             showDialog("Formateo Exitoso", "La base de datos ha quedado impecable. Has empezado de 0.", "alert");
@@ -680,7 +689,7 @@
                             document.getElementById('btnWipeDB').innerText = "Empezar de 0 (Borrar Todo)";
                         }
                     });
-                }, 300); // Pequeño retraso para que cierre el modal anterior y abra el nuevo sin bugs visuales
+                }, 300); 
             });
         };
 
