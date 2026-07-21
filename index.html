@@ -64,7 +64,7 @@
         .goal-amount { color: var(--text-main); font-weight: bold; }
         .progress-wrapper { background-color: var(--shadow); border-radius: 10px; height: 8px; width: 100%; overflow: hidden; margin-top: 10px; }
         .progress-fill { background-color: var(--card-color, var(--primary)); height: 100%; width: 0%; transition: width 0.5s ease; }
-        .progress-text { font-size: 0.8rem; color: var(--text-muted); margin-top: 5px; text-align: right; }
+        .progress-text { font-size: 0.8rem; color: var(--text-muted); margin-top: 5px; text-align: right; font-weight: bold;}
 
         .movements-list { background: var(--card-bg); border-radius: 15px; padding: 15px; box-shadow: 0 4px 10px var(--shadow); max-height: 250px; overflow-y: auto; }
         .movement-item { display: flex; justify-content: space-between; padding: 10px 0; border-bottom: 1px solid var(--shadow); font-size: 0.9rem; }
@@ -93,6 +93,9 @@
 
         @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
         .delete-btn { background: none; border: none; color: #ff4d4d; margin-top: 15px; font-weight: bold; text-decoration: underline; width: 100%; text-align: center; }
+        
+        /* Contenedor de botones en el Dialog Nativo */
+        .dialog-buttons { display: flex; gap: 10px; margin-top: 20px; }
     </style>
 </head>
 <body>
@@ -125,14 +128,14 @@
                 <label>Nombre de la meta/suscripción</label>
                 <input type="text" id="name" placeholder="Ej. Xbox Game Pass" required>
                 
-                <label>Cantidad Total ($)</label>
-                <input type="number" id="amount" placeholder="1200" required min="1">
+                <label>Costo Total ($)</label>
+                <input type="number" id="targetAmount" placeholder="3500" required min="1">
+                
+                <label>Dinero ya pagado/ahorrado (opcional)</label>
+                <input type="number" id="prePaidMoney" placeholder="Ej. 3200" value="0" min="0">
                 
                 <label>Fecha Límite</label>
                 <input type="date" id="deadline" required>
-
-                <label>Pagos ya realizados (opcional)</label>
-                <input type="number" id="prePaid" placeholder="Ej. 2" value="0" min="0">
 
                 <div class="color-picker-container">
                     <label>Color de la Tarjeta:</label>
@@ -208,6 +211,18 @@
         </div>
     </div>
 
+    <!-- NUEVO: Modal Nativo de Diálogos (Reemplaza a alert y confirm) -->
+    <div class="modal" id="customDialogModal" style="z-index: 2000;">
+        <div class="modal-content" style="text-align: center; max-width: 350px;">
+            <h2 id="dialogTitle" style="border:none; color: var(--text-main);">Atención</h2>
+            <p id="dialogMessage" style="color: var(--text-muted); font-size: 0.95rem; white-space: pre-wrap;"></p>
+            <div class="dialog-buttons">
+                <button class="action-btn close-btn" id="btnCancelDialog" style="flex: 1; margin: 0;">Cancelar</button>
+                <button class="main-btn" id="btnAcceptDialog" style="flex: 1; margin: 0;">Aceptar</button>
+            </div>
+        </div>
+    </div>
+
     <script>
         // === 1. CONFIGURACIÓN DE FIREBASE ===
         const firebaseConfig = {
@@ -239,7 +254,7 @@
                 osc.frequency.exponentialRampToValueAtTime(880, audioCtx.currentTime + 0.1); 
                 gain.gain.setValueAtTime(0.5, audioCtx.currentTime); gain.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.3);
                 osc.start(); osc.stop(audioCtx.currentTime + 0.3);
-            } catch(e) { console.log("Sonido desactivado"); }
+            } catch(e) {}
         }
 
         function playCoinSound() {
@@ -252,7 +267,7 @@
                 gain.gain.setValueAtTime(0.1, audioCtx.currentTime); gain.gain.setValueAtTime(0.3, audioCtx.currentTime + 0.08);
                 gain.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.3);
                 osc.start(); osc.stop(audioCtx.currentTime + 0.3);
-            } catch(e) { console.log("Sonido desactivado"); }
+            } catch(e) {}
         }
 
         // === 3. SISTEMA DE TEMAS ===
@@ -302,18 +317,16 @@
         function calculatePayments(totalAmount, deadlineDate, startDate = new Date()) {
             const start = new Date(startDate); start.setHours(0,0,0,0);
             const end = new Date(deadlineDate); end.setDate(end.getDate() + 1); end.setHours(0,0,0,0);
-            if (end <= start) return { count: 0, amountPerPayment: totalAmount };
+            if (end <= start) return { count: 0 };
             
             let count = 0; let current = new Date(start); current.setDate(current.getDate() + 1);
             while (current <= end) {
                 if (current.getDate() === 1 || current.getDate() === 15) count++;
                 current.setDate(current.getDate() + 1);
             }
-            const amount = count > 0 ? Math.ceil(totalAmount / count) : totalAmount;
-            return { count, amountPerPayment: amount };
+            return { count };
         }
 
-        // Ahora aceptamos un goalId para relacionar los movimientos
         async function logMovement(title, amount, type, actionDescForBackup, goalId = null) {
             await db.collection("movements").add({
                 title: title, amount: amount, type: type, date: new Date().toISOString(), goalId: goalId
@@ -321,20 +334,28 @@
             await triggerAutoBackup(actionDescForBackup); 
         }
 
-        // === 6. FIREBASE REALTIME ===
+        // === 6. FIREBASE REALTIME Y RENDERIZADO ===
         const mxn = new Intl.NumberFormat('es-MX', { style: 'currency', currency: 'MXN', maximumFractionDigits: 0 });
         let currentGoal = null;
-        let unsubscribeHistory = null; // Para limpiar el escuchador del modal de checkin
+        let unsubscribeHistory = null;
 
-        // Escuchar Metas
+        // Escuchar Metas (Migrado a "Dinero Guardado" en vez de "Conteo de Pagos")
         db.collection("goals").orderBy("createdAt", "desc").onSnapshot(snapshot => {
             const loading = document.getElementById('loadingText');
             if (loading) loading.remove();
 
             snapshot.docChanges().forEach(change => {
-                const goal = { id: change.doc.id, ...change.doc.data() };
-                const reqPayments = goal.totalPayments === 0 ? 1 : goal.totalPayments;
-                const percentage = Math.min((goal.paidCount / reqPayments) * 100, 100);
+                // Compatible con metas viejas (si existieran), pero asume la nueva estructura basada en dinero
+                const data = change.doc.data();
+                const goal = { 
+                    id: change.doc.id, 
+                    ...data,
+                    // Si es una meta vieja que usaba 'paidCount', la convertimos al vuelo para que no crashee
+                    savedAmount: data.savedAmount !== undefined ? data.savedAmount : ((data.paidCount || 0) * data.amountPerPayment),
+                    targetAmount: data.targetAmount !== undefined ? data.targetAmount : data.amount
+                };
+                
+                const percentage = Math.min((goal.savedAmount / goal.targetAmount) * 100, 100);
                 const list = document.getElementById('goalList');
 
                 if (change.type === "added") {
@@ -345,12 +366,12 @@
                     el.innerHTML = `
                         <div class="goal-header">
                             <span class="goal-title">${goal.name}</span>
-                            <span class="goal-amount">${mxn.format(goal.amount)}</span>
+                            <span class="goal-amount">${mxn.format(goal.targetAmount)}</span>
                         </div>
                         <div class="progress-wrapper">
                             <div class="progress-fill" style="width: 0%"></div>
                         </div>
-                        <div class="progress-text">${goal.paidCount} / ${reqPayments} pagos completados</div>
+                        <div class="progress-text">Ahorrado: ${mxn.format(goal.savedAmount)} / ${mxn.format(goal.targetAmount)}</div>
                     `;
                     
                     if (list.children.length === 0 || change.newIndex >= list.children.length) list.appendChild(el);
@@ -369,7 +390,7 @@
                         const fill = el.querySelector('.progress-fill');
                         const text = el.querySelector('.progress-text');
                         if (fill) fill.style.width = `${percentage}%`;
-                        if (text) text.innerText = `${goal.paidCount} / ${reqPayments} pagos completados`;
+                        if (text) text.innerText = `Ahorrado: ${mxn.format(goal.savedAmount)} / ${mxn.format(goal.targetAmount)}`;
                     }
                 } else if (change.type === "removed") {
                     const el = document.getElementById(`goal-${goal.id}`);
@@ -405,34 +426,97 @@
         const openModal = (id) => document.getElementById(id).style.display = 'flex';
         const closeModal = (id) => document.getElementById(id).style.display = 'none';
 
+        // CERRAR MODALES HACIENDO CLIC AFUERA
+        window.addEventListener('click', (e) => {
+            if (e.target.classList.contains('modal')) {
+                // No cerramos el de confirmación nativa haciendo clic afuera para evitar accidentes
+                if (e.target.id !== 'customDialogModal') {
+                    closeModal(e.target.id);
+                }
+            }
+        });
+
         document.getElementById('btnAdd').onclick = () => openModal('addModal');
         document.getElementById('btnConfig').onclick = () => { refreshBackupDropdown(); openModal('configModal'); };
 
-        // Guardar Suscripción (Con función de prepagos)
+        // SISTEMA DE DIÁLOGOS NATIVOS (Reemplaza alert y confirm)
+        function showDialog(title, message, type, onConfirmCallback = null) {
+            document.getElementById('dialogTitle').innerText = title;
+            document.getElementById('dialogMessage').innerText = message;
+            
+            const btnCancel = document.getElementById('btnCancelDialog');
+            const btnAccept = document.getElementById('btnAcceptDialog');
+            
+            // Reset y asignación
+            btnCancel.onclick = () => closeModal('customDialogModal');
+            btnAccept.onclick = () => {
+                closeModal('customDialogModal');
+                if (onConfirmCallback) onConfirmCallback();
+            };
+
+            if (type === 'alert') {
+                btnCancel.style.display = 'none';
+                btnAccept.style.backgroundColor = 'var(--primary)';
+                document.getElementById('dialogTitle').style.color = 'var(--text-main)';
+                btnAccept.innerText = 'Entendido';
+            } else if (type === 'danger') {
+                btnCancel.style.display = 'block';
+                btnAccept.style.backgroundColor = 'var(--primary)';
+                document.getElementById('dialogTitle').style.color = 'var(--primary)';
+                btnAccept.innerText = 'Sí, continuar';
+            } else { // 'confirm' estándar
+                btnCancel.style.display = 'block';
+                btnAccept.style.backgroundColor = 'var(--tertiary)';
+                document.getElementById('dialogTitle').style.color = 'var(--text-main)';
+                btnAccept.innerText = 'Aceptar';
+            }
+            openModal('customDialogModal');
+        }
+
+        // Guardar Suscripción (NUEVA LÓGICA DE "DINERO YA PAGADO")
         document.getElementById('goalForm').onsubmit = async (e) => {
             e.preventDefault();
             const btn = e.target.querySelector('button[type="submit"]');
             btn.innerText = "Guardando..."; btn.disabled = true;
 
-            const amount = parseFloat(document.getElementById('amount').value);
+            const targetAmount = parseFloat(document.getElementById('targetAmount').value);
+            let prePaidMoney = parseFloat(document.getElementById('prePaidMoney').value) || 0;
             const deadline = document.getElementById('deadline').value;
-            const prePaid = parseInt(document.getElementById('prePaid').value) || 0;
-            const pData = calculatePayments(amount, deadline);
 
-            // Asegurarse de que no ingresen más pagos de los que tiene la meta
-            const safePrePaid = Math.min(prePaid, pData.count === 0 ? 1 : pData.count);
+            // Evitar que pongan que ya pagaron más del total
+            if (prePaidMoney > targetAmount) prePaidMoney = targetAmount;
+
+            const remainingAmount = targetAmount - prePaidMoney;
+            const pData = calculatePayments(targetAmount, deadline);
+            
+            // Calculamos cuánto toca por pago basándonos EN LO QUE FALTA (rounded up)
+            let amountPerPayment = targetAmount; 
+            if (pData.count > 0 && remainingAmount > 0) {
+                amountPerPayment = Math.ceil(remainingAmount / pData.count);
+            } else if (remainingAmount === 0) {
+                amountPerPayment = 0; // Ya está pagado completo
+            }
 
             const newGoal = {
-                name: document.getElementById('name').value, amount: amount, deadline: deadline,
-                color: document.getElementById('cardColor').value, totalPayments: pData.count,
-                amountPerPayment: pData.amountPerPayment, paidCount: safePrePaid, createdAt: new Date().toISOString()
+                name: document.getElementById('name').value, 
+                targetAmount: targetAmount, 
+                savedAmount: prePaidMoney, // Ahora guardamos dinero en lugar de número de pagos
+                deadline: deadline,
+                color: document.getElementById('cardColor').value, 
+                totalPayments: pData.count,
+                amountPerPayment: amountPerPayment, 
+                createdAt: new Date().toISOString()
             };
 
             const docRef = await db.collection("goals").add(newGoal);
             
-            // Si el usuario puso pagos previos, sumamos eso al monto inicial en el historial
-            const initialLoggedAmount = newGoal.amountPerPayment * safePrePaid;
-            await logMovement(`Suscripción Creada: ${newGoal.name}`, initialLoggedAmount, 'out', `Se creó: ${newGoal.name}`, docRef.id);
+            // Si el usuario ingresó dinero previo, lo registramos como movimiento inicial
+            if (prePaidMoney > 0) {
+                await logMovement(`Dinero Previo: ${newGoal.name}`, prePaidMoney, 'in', `Se creó: ${newGoal.name}`, docRef.id);
+            } else {
+                // Solo registramos el movimiento de creación técnica para el backup
+                await triggerAutoBackup(`Se creó: ${newGoal.name}`);
+            }
             
             playSuccessSound();
             confetti({ particleCount: 100, spread: 70, origin: { y: 0.6 }, colors: ['#e07a5f', '#81b29a', '#f2cc8f'] });
@@ -442,22 +526,23 @@
             btn.innerText = "Guardar Suscripción"; btn.disabled = false;
         };
 
-        // Abrir Checkin (Cargando historial individual)
+        // Abrir Checkin 
         function openCheckin(goal) {
             currentGoal = goal;
             document.getElementById('ciTitle').innerText = goal.name;
-            document.getElementById('ciAmount').innerText = mxn.format(goal.amountPerPayment);
             
-            const reqPayments = goal.totalPayments === 0 ? 1 : goal.totalPayments;
             const btn = document.getElementById('btnMakeCheckin');
             
-            if(goal.paidCount >= reqPayments) {
-                btn.innerText = "¡Meta Completada!"; btn.disabled = true; btn.style.backgroundColor = "var(--tertiary)";
+            if(goal.savedAmount >= goal.targetAmount) {
+                document.getElementById('ciAmount').innerText = "Completado";
+                btn.innerText = "¡Meta Alcanzada!"; btn.disabled = true; btn.style.backgroundColor = "var(--tertiary)";
             } else {
+                // Muestra exactamente de a cuánto son los pagos
+                document.getElementById('ciAmount').innerText = mxn.format(goal.amountPerPayment);
                 btn.innerText = "💰 Registrar Pago"; btn.disabled = false; btn.style.backgroundColor = "var(--primary)";
             }
 
-            // Historial Específico
+            // Cargar Historial Específico en el Panel Derecho
             if (unsubscribeHistory) unsubscribeHistory();
             unsubscribeHistory = db.collection("movements")
                 .where("goalId", "==", goal.id)
@@ -469,7 +554,6 @@
                         return;
                     }
                     
-                    // Ordenamos localmente para evitar pedirte que configures Índices en Firebase
                     const moves = [];
                     snap.forEach(doc => moves.push(doc.data()));
                     moves.sort((a, b) => new Date(b.date) - new Date(a.date));
@@ -492,38 +576,52 @@
             openModal('checkinModal');
         }
 
-        // Hacer Checkin
+        // Hacer Checkin (Lógica para dinero)
         document.getElementById('btnMakeCheckin').onclick = async () => {
             if(!currentGoal) return;
-            const reqPayments = currentGoal.totalPayments === 0 ? 1 : currentGoal.totalPayments;
-            const newCount = currentGoal.paidCount + 1;
             
             document.getElementById('btnMakeCheckin').innerText = "Guardando...";
             
-            await db.collection("goals").doc(currentGoal.id).update({ paidCount: newCount });
-            await logMovement(`Abono: ${currentGoal.name}`, currentGoal.amountPerPayment, 'in', `Check-in a: ${currentGoal.name}`, currentGoal.id);
+            const remainingToSave = currentGoal.targetAmount - currentGoal.savedAmount;
+            let depositAmount = currentGoal.amountPerPayment;
+            
+            // Si el pago regular es mayor a lo que falta, solo cobramos el restante exacto
+            if (depositAmount > remainingToSave) {
+                depositAmount = remainingToSave;
+            }
+            
+            const newSavedAmount = currentGoal.savedAmount + depositAmount;
+            
+            await db.collection("goals").doc(currentGoal.id).update({ savedAmount: newSavedAmount });
+            await logMovement(`Abono: ${currentGoal.name}`, depositAmount, 'in', `Check-in a: ${currentGoal.name}`, currentGoal.id);
             
             playCoinSound();
-            if (newCount >= reqPayments) confetti({ particleCount: 200, spread: 100, origin: { y: 0.5 } });
-            else confetti({ particleCount: 40, spread: 50, origin: { y: 0.7 }, colors: ['#f2cc8f'] });
-            
-            closeModal('checkinModal');
-        };
-
-        // Borrar Suscripción
-        document.getElementById('btnDeleteGoal').onclick = async () => {
-            if(confirm("¿Estás seguro de eliminar esta suscripción?")) {
-                await db.collection("goals").doc(currentGoal.id).delete();
-                await logMovement(`Eliminada: ${currentGoal.name}`, 0, 'out', `Se borró: ${currentGoal.name}`, currentGoal.id);
-                closeModal('checkinModal');
+            if (newSavedAmount >= currentGoal.targetAmount) {
+                confetti({ particleCount: 200, spread: 100, origin: { y: 0.5 } });
+                closeModal('checkinModal'); // Solo cerramos si ya se acabó de pagar
+            } else {
+                confetti({ particleCount: 40, spread: 50, origin: { y: 0.7 }, colors: ['#f2cc8f'] });
+                document.getElementById('btnMakeCheckin').innerText = "💰 Registrar Pago";
             }
         };
 
-        // Restaurar Versión
-        document.getElementById('btnRestoreLocal').onclick = async () => {
+        // Borrar Suscripción (Con Dialog Nativo)
+        document.getElementById('btnDeleteGoal').onclick = () => {
+            showDialog("Eliminar Suscripción", `¿Estás seguro de que deseas eliminar "${currentGoal.name}"? Perderás su historial.`, "danger", async () => {
+                const goalName = currentGoal.name;
+                const goalId = currentGoal.id;
+                await db.collection("goals").doc(goalId).delete();
+                await logMovement(`Eliminada: ${goalName}`, 0, 'out', `Se borró: ${goalName}`, goalId);
+                closeModal('checkinModal');
+            });
+        };
+
+        // Restaurar Versión (Con Dialog Nativo)
+        document.getElementById('btnRestoreLocal').onclick = () => {
             const select = document.getElementById('backupSelect');
-            if(!select.value) return alert("Selecciona una versión primero.");
-            if(confirm("🚨 ADVERTENCIA: Esto borrará los datos actuales en la nube y los reemplazará con la versión seleccionada. ¿Continuar?")) {
+            if(!select.value) return showDialog("Error", "Selecciona una versión de la lista primero.", "alert");
+            
+            showDialog("Restaurar Versión", "🚨 ADVERTENCIA: Esto borrará los datos actuales en la nube y los reemplazará con la versión seleccionada. ¿Continuar?", "danger", async () => {
                 document.getElementById('btnRestoreLocal').innerText = "Restaurando...";
                 let history = JSON.parse(localStorage.getItem('ahorros_backups_list') || '[]');
                 const backup = history.find(b => b.id.toString() === select.value);
@@ -546,47 +644,44 @@
                     });
 
                     await batch.commit();
-                    alert("¡Viaje en el tiempo exitoso! Tus datos han sido restaurados.");
                     closeModal('configModal');
+                    showDialog("¡Éxito!", "Viaje en el tiempo completado. Tus datos han sido restaurados.", "alert");
                 } catch (error) {
-                    alert("Hubo un error al intentar restaurar.");
+                    showDialog("Error", "Hubo un error al intentar restaurar.", "alert");
                 } finally {
                     document.getElementById('btnRestoreLocal').innerText = "Restaurar Versión";
                 }
-            }
+            });
         };
 
-        // BOTÓN: EMPEZAR DE CERO
-        document.getElementById('btnWipeDB').onclick = async () => {
-            if(confirm("🚨 ¿ESTÁS COMPLETAMENTE SEGURO?\n\nEsto borrará todas tus suscripciones, el historial y los movimientos. La base de datos quedará en cero absoluto.")) {
-                if(confirm("Última advertencia: No hay vuelta atrás. ¿Continuar y empezar de 0?")) {
-                    
-                    document.getElementById('btnWipeDB').innerText = "Borrando Base de Datos...";
-                    
-                    try {
-                        const batch = db.batch();
-                        
-                        // Busca todo en las 2 colecciones y lo borra
-                        const currentGoals = await db.collection("goals").get();
-                        currentGoals.forEach(doc => batch.delete(doc.ref));
-                        
-                        const currentMoves = await db.collection("movements").get();
-                        currentMoves.forEach(doc => batch.delete(doc.ref));
+        // BOTÓN: EMPEZAR DE CERO (Con Dialog Nativo)
+        document.getElementById('btnWipeDB').onclick = () => {
+            showDialog("Zona de Peligro", "🚨 ¿ESTÁS COMPLETAMENTE SEGURO?\n\nEsto borrará todas tus suscripciones, el historial y los movimientos de la nube.", "danger", () => {
+                
+                // Doble confirmación nativa
+                setTimeout(() => {
+                    showDialog("Última Advertencia", "No hay vuelta atrás. ¿Continuar y formatear la base de datos?", "danger", async () => {
+                        document.getElementById('btnWipeDB').innerText = "Borrando Base de Datos...";
+                        try {
+                            const batch = db.batch();
+                            const currentGoals = await db.collection("goals").get();
+                            currentGoals.forEach(doc => batch.delete(doc.ref));
+                            const currentMoves = await db.collection("movements").get();
+                            currentMoves.forEach(doc => batch.delete(doc.ref));
 
-                        await batch.commit();
-                        
-                        // Limpia el caché local de la Máquina del Tiempo
-                        localStorage.removeItem('ahorros_backups_list');
-                        
-                        alert("¡Base de datos formateada con éxito! Has empezado de 0.");
-                        closeModal('configModal');
-                    } catch(error) {
-                        alert("Error al intentar borrar la base de datos.");
-                    } finally {
-                        document.getElementById('btnWipeDB').innerText = "Empezar de 0 (Borrar Todo)";
-                    }
-                }
-            }
+                            await batch.commit();
+                            localStorage.removeItem('ahorros_backups_list'); // Limpiar historial
+                            
+                            closeModal('configModal');
+                            showDialog("Formateo Exitoso", "La base de datos ha quedado impecable. Has empezado de 0.", "alert");
+                        } catch(error) {
+                            showDialog("Error", "No se pudo formatear la base de datos.", "alert");
+                        } finally {
+                            document.getElementById('btnWipeDB').innerText = "Empezar de 0 (Borrar Todo)";
+                        }
+                    });
+                }, 300); // Pequeño retraso para que cierre el modal anterior y abra el nuevo sin bugs visuales
+            });
         };
 
         // PWA Service Worker
