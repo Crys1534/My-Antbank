@@ -77,7 +77,20 @@
         .fab:hover { transform: scale(1.05); }
 
         .modal { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: var(--modal-bg); z-index: 1000; justify-content: center; align-items: center; backdrop-filter: blur(5px); animation: fadeIn 0.2s; }
+        
+        /* DISEÑO DUAL PANE PARA EL MODAL DE CHECKIN */
         .modal-content { background: var(--card-bg); padding: 25px; border-radius: 20px; width: 90%; max-width: 400px; max-height: 90vh; overflow-y: auto; box-shadow: 0 10px 30px rgba(0,0,0,0.5); }
+        .modal-content.dual-pane { max-width: 700px; display: flex; flex-direction: column; gap: 20px; }
+        .pane-left, .pane-right { flex: 1; display: flex; flex-direction: column; }
+        
+        @media (min-width: 650px) {
+            .modal-content.dual-pane { flex-direction: row; }
+            .pane-right { border-left: 2px solid var(--shadow); padding-left: 20px; }
+        }
+
+        .history-list { max-height: 200px; overflow-y: auto; margin-top: 10px; padding-right: 5px; }
+        .history-mini-item { display: flex; justify-content: space-between; font-size: 0.85rem; padding: 8px 0; border-bottom: 1px solid var(--shadow); }
+
         @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
         .delete-btn { background: none; border: none; color: #ff4d4d; margin-top: 15px; font-weight: bold; text-decoration: underline; width: 100%; text-align: center; }
     </style>
@@ -95,7 +108,7 @@
             <p style="text-align:center; color: var(--text-muted); font-size:0.9rem;" id="loadingText">Cargando...</p>
         </div>
 
-        <h2>Últimos Movimientos</h2>
+        <h2>Últimos Movimientos Globales</h2>
         <div class="movements-list" id="movementsList">
             <p style="text-align:center; color: var(--text-muted); font-size:0.9rem;">Cargando movimientos...</p>
         </div>
@@ -118,6 +131,9 @@
                 <label>Fecha Límite</label>
                 <input type="date" id="deadline" required>
 
+                <label>Pagos ya realizados (opcional)</label>
+                <input type="number" id="prePaid" placeholder="Ej. 2" value="0" min="0">
+
                 <div class="color-picker-container">
                     <label>Color de la Tarjeta:</label>
                     <input type="color" id="cardColor" value="#d90429">
@@ -129,16 +145,29 @@
         </div>
     </div>
 
-    <!-- Modal Check-in -->
+    <!-- Modal Check-in con Panel Doble -->
     <div class="modal" id="checkinModal">
-        <div class="modal-content" style="text-align: center;">
-            <h2 id="ciTitle" style="border:none;">Suscripción</h2>
-            <p style="color: var(--text-muted);">Siguiente pago (Día 1 o 15):</p>
-            <h1 id="ciAmount" style="font-size: 2.5rem; margin: 15px 0;">$0</h1>
+        <div class="modal-content dual-pane">
             
-            <button class="main-btn" id="btnMakeCheckin" style="margin-bottom: 15px;">💰 Registrar Pago</button>
-            <button class="action-btn close-btn" onclick="closeModal('checkinModal')">Cerrar</button>
-            <button class="delete-btn" id="btnDeleteGoal">Eliminar Suscripción</button>
+            <!-- Izquierda: Acción de Pago -->
+            <div class="pane-left" style="text-align: center;">
+                <h2 id="ciTitle" style="border:none;">Suscripción</h2>
+                <p style="color: var(--text-muted);">Siguiente pago (Día 1 o 15):</p>
+                <h1 id="ciAmount" style="font-size: 2.5rem; margin: 15px 0;">$0</h1>
+                
+                <button class="main-btn" id="btnMakeCheckin" style="margin-bottom: 15px;">💰 Registrar Pago</button>
+                <button class="action-btn close-btn" onclick="closeModal('checkinModal')">Cerrar</button>
+                <button class="delete-btn" id="btnDeleteGoal">Eliminar Suscripción</button>
+            </div>
+
+            <!-- Derecha: Historial individual -->
+            <div class="pane-right">
+                <h3 style="color: var(--secondary); font-size: 1.1rem; border-bottom: 1px solid var(--shadow); padding-bottom: 5px;">Historial de esta meta</h3>
+                <div id="ciHistoryList" class="history-list">
+                    <p style="text-align:center; color: var(--text-muted); font-size:0.9rem;">Cargando...</p>
+                </div>
+            </div>
+
         </div>
     </div>
 
@@ -154,16 +183,25 @@
                 <option value="pastel">🎨 Pastel</option>
             </select>
 
-            <!-- SISTEMA DE RESPALDOS TIPO OFFICE -->
+            <!-- SISTEMA DE RESPALDOS -->
             <div style="background: var(--shadow); padding: 15px; border-radius: 10px; margin: 15px 0;">
-                <h4 style="margin-bottom: 5px;">🕰️ Máquina del Tiempo (Respaldos)</h4>
+                <h4 style="margin-bottom: 5px;">🕰️ Máquina del Tiempo</h4>
                 <p style="font-size: 0.8rem; color: var(--text-muted); margin-bottom: 10px;">
-                    La app crea un punto de restauración automáticamente con cada cambio que haces. Selecciona uno para volver en el tiempo:
+                    Restaura la nube a una versión anterior.
                 </p>
-                <select id="backupSelect" style="font-size: 0.85rem;">
-                    <!-- Aquí se cargarán las versiones -->
+                <select id="backupSelect" style="font-size: 0.85rem; margin-bottom: 10px;">
+                    <!-- Versiones -->
                 </select>
                 <button class="action-btn" id="btnRestoreLocal" style="background-color: var(--primary);">Restaurar Versión</button>
+            </div>
+
+            <!-- BOTÓN DE EMPEZAR DE 0 -->
+            <div style="background: rgba(217, 4, 41, 0.1); padding: 15px; border-radius: 10px; margin: 15px 0; border: 1px solid var(--primary);">
+                <h4 style="margin-bottom: 5px; color: var(--primary);">⚠️ Zona de Peligro</h4>
+                <p style="font-size: 0.8rem; color: var(--text-muted); margin-bottom: 10px;">
+                    Borra toda la base de datos para empezar desde cero. Esta acción no se puede deshacer.
+                </p>
+                <button class="action-btn" id="btnWipeDB" style="background-color: var(--primary);">Empezar de 0 (Borrar Todo)</button>
             </div>
 
             <button class="action-btn close-btn" onclick="closeModal('configModal')">Cerrar</button>
@@ -185,10 +223,8 @@
         firebase.initializeApp(firebaseConfig);
         const db = firebase.firestore();
 
-        // === 2. GAMIFICACIÓN (SONIDOS CORREGIDOS) ===
-        // Ya no lo iniciamos afuera para evitar el error de "AudioContext prevented"
+        // === 2. GAMIFICACIÓN (SONIDOS) ===
         let audioCtx; 
-
         function initAudio() {
             if (!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
             if (audioCtx.state === 'suspended') audioCtx.resume();
@@ -203,7 +239,7 @@
                 osc.frequency.exponentialRampToValueAtTime(880, audioCtx.currentTime + 0.1); 
                 gain.gain.setValueAtTime(0.5, audioCtx.currentTime); gain.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.3);
                 osc.start(); osc.stop(audioCtx.currentTime + 0.3);
-            } catch(e) { console.log("Sonido desactivado temporalmente"); }
+            } catch(e) { console.log("Sonido desactivado"); }
         }
 
         function playCoinSound() {
@@ -216,7 +252,7 @@
                 gain.gain.setValueAtTime(0.1, audioCtx.currentTime); gain.gain.setValueAtTime(0.3, audioCtx.currentTime + 0.08);
                 gain.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.3);
                 osc.start(); osc.stop(audioCtx.currentTime + 0.3);
-            } catch(e) { console.log("Sonido desactivado temporalmente"); }
+            } catch(e) { console.log("Sonido desactivado"); }
         }
 
         // === 3. SISTEMA DE TEMAS ===
@@ -230,16 +266,14 @@
             localStorage.setItem('appTheme', e.target.value);
         });
 
-        // === 4. HISTORIAL DE RESPALDOS TIPO OFFICE ===
+        // === 4. HISTORIAL DE RESPALDOS ===
         async function triggerAutoBackup(actionDescription) {
             try {
                 const goalsSnap = await db.collection("goals").get();
                 const movesSnap = await db.collection("movements").get();
                 
                 const backup = {
-                    id: Date.now(),
-                    action: actionDescription,
-                    date: new Date().toISOString(),
+                    id: Date.now(), action: actionDescription, date: new Date().toISOString(),
                     goals: goalsSnap.docs.map(d => ({id: d.id, ...d.data()})),
                     movements: movesSnap.docs.map(d => ({id: d.id, ...d.data()}))
                 };
@@ -248,26 +282,18 @@
                 history.unshift(backup);
                 if (history.length > 15) history.pop();
                 localStorage.setItem('ahorros_backups_list', JSON.stringify(history));
-            } catch(e) { console.error("Error en auto-respaldo", e); }
+            } catch(e) { console.error("Error auto-respaldo", e); }
         }
 
         function refreshBackupDropdown() {
             const select = document.getElementById('backupSelect');
             let history = JSON.parse(localStorage.getItem('ahorros_backups_list') || '[]');
-            
             select.innerHTML = '';
-            if (history.length === 0) {
-                select.innerHTML = '<option value="">Sin respaldos previos...</option>';
-                return;
-            }
-
+            if (history.length === 0) return select.innerHTML = '<option value="">Sin respaldos previos...</option>';
             history.forEach(b => {
-                const opt = document.createElement('option');
-                opt.value = b.id;
-                const dateObj = new Date(b.date);
-                const time = dateObj.toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'});
-                const date = dateObj.toLocaleDateString();
-                opt.text = `${date} ${time} - ${b.action}`;
+                const opt = document.createElement('option'); opt.value = b.id;
+                const d = new Date(b.date);
+                opt.text = `${d.toLocaleDateString()} ${d.toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})} - ${b.action}`;
                 select.appendChild(opt);
             });
         }
@@ -287,17 +313,20 @@
             return { count, amountPerPayment: amount };
         }
 
-        async function logMovement(title, amount, type, actionDescForBackup) {
+        // Ahora aceptamos un goalId para relacionar los movimientos
+        async function logMovement(title, amount, type, actionDescForBackup, goalId = null) {
             await db.collection("movements").add({
-                title: title, amount: amount, type: type, date: new Date().toISOString()
+                title: title, amount: amount, type: type, date: new Date().toISOString(), goalId: goalId
             });
             await triggerAutoBackup(actionDescForBackup); 
         }
 
-        // === 6. FIREBASE REALTIME Y ANIMACIONES (¡CORREGIDO!) ===
+        // === 6. FIREBASE REALTIME ===
         const mxn = new Intl.NumberFormat('es-MX', { style: 'currency', currency: 'MXN', maximumFractionDigits: 0 });
         let currentGoal = null;
+        let unsubscribeHistory = null; // Para limpiar el escuchador del modal de checkin
 
+        // Escuchar Metas
         db.collection("goals").orderBy("createdAt", "desc").onSnapshot(snapshot => {
             const loading = document.getElementById('loadingText');
             if (loading) loading.remove();
@@ -310,8 +339,7 @@
 
                 if (change.type === "added") {
                     const el = document.createElement('div');
-                    el.className = 'goal-item';
-                    el.id = `goal-${goal.id}`;
+                    el.className = 'goal-item'; el.id = `goal-${goal.id}`;
                     el.style.setProperty('--card-color', goal.color);
                     
                     el.innerHTML = `
@@ -325,15 +353,10 @@
                         <div class="progress-text">${goal.paidCount} / ${reqPayments} pagos completados</div>
                     `;
                     
-                    if (list.children.length === 0 || change.newIndex >= list.children.length) {
-                        list.appendChild(el);
-                    } else {
-                        list.insertBefore(el, list.children[change.newIndex]);
-                    }
+                    if (list.children.length === 0 || change.newIndex >= list.children.length) list.appendChild(el);
+                    else list.insertBefore(el, list.children[change.newIndex]);
                     
                     el.onclick = () => openCheckin(goal);
-                    
-                    // MÉTODO SEGURO: Buscar la barra solo dentro de esta tarjeta
                     setTimeout(() => { 
                         const fill = el.querySelector('.progress-fill');
                         if (fill) fill.style.width = `${percentage}%`; 
@@ -343,10 +366,8 @@
                     const el = document.getElementById(`goal-${goal.id}`);
                     if (el) {
                         el.onclick = () => openCheckin(goal);
-                        // MÉTODO SEGURO: Evita el error 'null'
                         const fill = el.querySelector('.progress-fill');
                         const text = el.querySelector('.progress-text');
-                        
                         if (fill) fill.style.width = `${percentage}%`;
                         if (text) text.innerText = `${goal.paidCount} / ${reqPayments} pagos completados`;
                     }
@@ -357,11 +378,11 @@
             });
         });
 
-        // Escuchar Movimientos
+        // Escuchar Movimientos Globales
         db.collection("movements").orderBy("date", "desc").limit(10).onSnapshot(snapshot => {
             const list = document.getElementById('movementsList');
             list.innerHTML = '';
-            if(snapshot.empty) list.innerHTML = '<p style="text-align:center; font-size:0.9rem;">No hay movimientos aún</p>';
+            if(snapshot.empty) list.innerHTML = '<p style="text-align:center; color:var(--text-muted); font-size:0.9rem;">No hay movimientos aún</p>';
             
             snapshot.forEach(doc => {
                 const mov = doc.data(); const d = new Date(mov.date);
@@ -385,12 +406,9 @@
         const closeModal = (id) => document.getElementById(id).style.display = 'none';
 
         document.getElementById('btnAdd').onclick = () => openModal('addModal');
-        document.getElementById('btnConfig').onclick = () => {
-            refreshBackupDropdown(); 
-            openModal('configModal');
-        };
+        document.getElementById('btnConfig').onclick = () => { refreshBackupDropdown(); openModal('configModal'); };
 
-        // Guardar Suscripción
+        // Guardar Suscripción (Con función de prepagos)
         document.getElementById('goalForm').onsubmit = async (e) => {
             e.preventDefault();
             const btn = e.target.querySelector('button[type="submit"]');
@@ -398,16 +416,23 @@
 
             const amount = parseFloat(document.getElementById('amount').value);
             const deadline = document.getElementById('deadline').value;
+            const prePaid = parseInt(document.getElementById('prePaid').value) || 0;
             const pData = calculatePayments(amount, deadline);
+
+            // Asegurarse de que no ingresen más pagos de los que tiene la meta
+            const safePrePaid = Math.min(prePaid, pData.count === 0 ? 1 : pData.count);
 
             const newGoal = {
                 name: document.getElementById('name').value, amount: amount, deadline: deadline,
                 color: document.getElementById('cardColor').value, totalPayments: pData.count,
-                amountPerPayment: pData.amountPerPayment, paidCount: 0, createdAt: new Date().toISOString()
+                amountPerPayment: pData.amountPerPayment, paidCount: safePrePaid, createdAt: new Date().toISOString()
             };
 
-            await db.collection("goals").add(newGoal);
-            await logMovement(`Suscripción Creada: ${newGoal.name}`, newGoal.amount, 'out', `Se creó: ${newGoal.name}`);
+            const docRef = await db.collection("goals").add(newGoal);
+            
+            // Si el usuario puso pagos previos, sumamos eso al monto inicial en el historial
+            const initialLoggedAmount = newGoal.amountPerPayment * safePrePaid;
+            await logMovement(`Suscripción Creada: ${newGoal.name}`, initialLoggedAmount, 'out', `Se creó: ${newGoal.name}`, docRef.id);
             
             playSuccessSound();
             confetti({ particleCount: 100, spread: 70, origin: { y: 0.6 }, colors: ['#e07a5f', '#81b29a', '#f2cc8f'] });
@@ -417,7 +442,7 @@
             btn.innerText = "Guardar Suscripción"; btn.disabled = false;
         };
 
-        // Abrir Checkin
+        // Abrir Checkin (Cargando historial individual)
         function openCheckin(goal) {
             currentGoal = goal;
             document.getElementById('ciTitle').innerText = goal.name;
@@ -431,6 +456,39 @@
             } else {
                 btn.innerText = "💰 Registrar Pago"; btn.disabled = false; btn.style.backgroundColor = "var(--primary)";
             }
+
+            // Historial Específico
+            if (unsubscribeHistory) unsubscribeHistory();
+            unsubscribeHistory = db.collection("movements")
+                .where("goalId", "==", goal.id)
+                .onSnapshot(snap => {
+                    const list = document.getElementById('ciHistoryList');
+                    list.innerHTML = '';
+                    if(snap.empty) {
+                        list.innerHTML = '<p style="text-align:center; color:var(--text-muted); font-size:0.9rem;">Sin movimientos aún</p>';
+                        return;
+                    }
+                    
+                    // Ordenamos localmente para evitar pedirte que configures Índices en Firebase
+                    const moves = [];
+                    snap.forEach(doc => moves.push(doc.data()));
+                    moves.sort((a, b) => new Date(b.date) - new Date(a.date));
+                    
+                    moves.forEach(m => {
+                        const d = new Date(m.date);
+                        const dateStr = `${d.toLocaleDateString()} ${d.toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})}`;
+                        const isPos = m.type === 'in'; const sign = isPos ? '+' : '-';
+                        const css = isPos ? 'mov-positive' : 'mov-negative';
+                        
+                        list.innerHTML += `
+                            <div class="history-mini-item">
+                                <span>${m.title} <br><small style="color:var(--text-muted)">${dateStr}</small></span>
+                                <span class="${css}">${sign}${mxn.format(m.amount)}</span>
+                            </div>
+                        `;
+                    });
+                });
+
             openModal('checkinModal');
         }
 
@@ -443,7 +501,7 @@
             document.getElementById('btnMakeCheckin').innerText = "Guardando...";
             
             await db.collection("goals").doc(currentGoal.id).update({ paidCount: newCount });
-            await logMovement(`Abono: ${currentGoal.name}`, currentGoal.amountPerPayment, 'in', `Check-in a: ${currentGoal.name}`);
+            await logMovement(`Abono: ${currentGoal.name}`, currentGoal.amountPerPayment, 'in', `Check-in a: ${currentGoal.name}`, currentGoal.id);
             
             playCoinSound();
             if (newCount >= reqPayments) confetti({ particleCount: 200, spread: 100, origin: { y: 0.5 } });
@@ -456,53 +514,77 @@
         document.getElementById('btnDeleteGoal').onclick = async () => {
             if(confirm("¿Estás seguro de eliminar esta suscripción?")) {
                 await db.collection("goals").doc(currentGoal.id).delete();
-                await logMovement(`Eliminada: ${currentGoal.name}`, 0, 'out', `Se borró: ${currentGoal.name}`);
+                await logMovement(`Eliminada: ${currentGoal.name}`, 0, 'out', `Se borró: ${currentGoal.name}`, currentGoal.id);
                 closeModal('checkinModal');
             }
         };
 
-        // Restaurar Versión de la Máquina del Tiempo
+        // Restaurar Versión
         document.getElementById('btnRestoreLocal').onclick = async () => {
             const select = document.getElementById('backupSelect');
             if(!select.value) return alert("Selecciona una versión primero.");
-
-            if(confirm("🚨 ADVERTENCIA: Esto borrará los datos actuales en la nube y los reemplazará con la versión seleccionada. ¿Estás seguro?")) {
-                
+            if(confirm("🚨 ADVERTENCIA: Esto borrará los datos actuales en la nube y los reemplazará con la versión seleccionada. ¿Continuar?")) {
                 document.getElementById('btnRestoreLocal').innerText = "Restaurando...";
-                
                 let history = JSON.parse(localStorage.getItem('ahorros_backups_list') || '[]');
                 const backup = history.find(b => b.id.toString() === select.value);
 
                 try {
                     const batch = db.batch();
-                    
                     const currentGoals = await db.collection("goals").get();
                     currentGoals.forEach(doc => batch.delete(doc.ref));
-                    
                     const currentMoves = await db.collection("movements").get();
                     currentMoves.forEach(doc => batch.delete(doc.ref));
 
                     backup.goals.forEach(g => {
                         const ref = db.collection("goals").doc(g.id);
-                        const data = {...g}; delete data.id; 
-                        batch.set(ref, data);
+                        const data = {...g}; delete data.id; batch.set(ref, data);
                     });
                     
                     backup.movements.forEach(m => {
                         const ref = db.collection("movements").doc(m.id);
-                        const data = {...m}; delete data.id;
-                        batch.set(ref, data);
+                        const data = {...m}; delete data.id; batch.set(ref, data);
                     });
 
                     await batch.commit();
-                    
                     alert("¡Viaje en el tiempo exitoso! Tus datos han sido restaurados.");
                     closeModal('configModal');
                 } catch (error) {
-                    console.error("Error restaurando", error);
                     alert("Hubo un error al intentar restaurar.");
                 } finally {
                     document.getElementById('btnRestoreLocal').innerText = "Restaurar Versión";
+                }
+            }
+        };
+
+        // BOTÓN: EMPEZAR DE CERO
+        document.getElementById('btnWipeDB').onclick = async () => {
+            if(confirm("🚨 ¿ESTÁS COMPLETAMENTE SEGURO?\n\nEsto borrará todas tus suscripciones, el historial y los movimientos. La base de datos quedará en cero absoluto.")) {
+                if(confirm("Última advertencia: No hay vuelta atrás. ¿Continuar y empezar de 0?")) {
+                    
+                    document.getElementById('btnWipeDB').innerText = "Borrando Base de Datos...";
+                    
+                    try {
+                        const batch = db.batch();
+                        
+                        // Busca todo en las 2 colecciones y lo borra
+                        const currentGoals = await db.collection("goals").get();
+                        currentGoals.forEach(doc => batch.delete(doc.ref));
+                        
+                        const currentMoves = await db.collection("movements").get();
+                        currentMoves.forEach(doc => batch.delete(doc.ref));
+
+                        await batch.commit();
+                        
+                        // Limpia el caché local de la Máquina del Tiempo
+                        localStorage.removeItem('ahorros_backups_list');
+                        
+                        alert("¡Base de datos formateada con éxito! Has empezado de 0.");
+                        closeModal('configModal');
+                    } catch(error) {
+                        alert("Error al intentar borrar la base de datos.");
+                    } finally {
+                        document.getElementById('btnWipeDB').innerText = "Empezar de 0 (Borrar Todo)";
+                    }
                 }
             }
         };
