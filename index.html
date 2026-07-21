@@ -154,7 +154,7 @@
                 <option value="pastel">🎨 Pastel</option>
             </select>
 
-            <!-- NUEVO SISTEMA DE RESPALDOS TIPO OFFICE -->
+            <!-- SISTEMA DE RESPALDOS TIPO OFFICE -->
             <div style="background: var(--shadow); padding: 15px; border-radius: 10px; margin: 15px 0;">
                 <h4 style="margin-bottom: 5px;">🕰️ Máquina del Tiempo (Respaldos)</h4>
                 <p style="font-size: 0.8rem; color: var(--text-muted); margin-bottom: 10px;">
@@ -185,27 +185,38 @@
         firebase.initializeApp(firebaseConfig);
         const db = firebase.firestore();
 
-        // === 2. GAMIFICACIÓN (SONIDOS) ===
-        const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
-        function playSuccessSound() {
+        // === 2. GAMIFICACIÓN (SONIDOS CORREGIDOS) ===
+        // Ya no lo iniciamos afuera para evitar el error de "AudioContext prevented"
+        let audioCtx; 
+
+        function initAudio() {
+            if (!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
             if (audioCtx.state === 'suspended') audioCtx.resume();
-            const osc = audioCtx.createOscillator(); const gain = audioCtx.createGain();
-            osc.connect(gain); gain.connect(audioCtx.destination);
-            osc.type = 'sine'; osc.frequency.setValueAtTime(523.25, audioCtx.currentTime); 
-            osc.frequency.exponentialRampToValueAtTime(880, audioCtx.currentTime + 0.1); 
-            gain.gain.setValueAtTime(0.5, audioCtx.currentTime); gain.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.3);
-            osc.start(); osc.stop(audioCtx.currentTime + 0.3);
+        }
+
+        function playSuccessSound() {
+            try {
+                initAudio();
+                const osc = audioCtx.createOscillator(); const gain = audioCtx.createGain();
+                osc.connect(gain); gain.connect(audioCtx.destination);
+                osc.type = 'sine'; osc.frequency.setValueAtTime(523.25, audioCtx.currentTime); 
+                osc.frequency.exponentialRampToValueAtTime(880, audioCtx.currentTime + 0.1); 
+                gain.gain.setValueAtTime(0.5, audioCtx.currentTime); gain.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.3);
+                osc.start(); osc.stop(audioCtx.currentTime + 0.3);
+            } catch(e) { console.log("Sonido desactivado temporalmente"); }
         }
 
         function playCoinSound() {
-            if (audioCtx.state === 'suspended') audioCtx.resume();
-            const osc = audioCtx.createOscillator(); const gain = audioCtx.createGain();
-            osc.connect(gain); gain.connect(audioCtx.destination);
-            osc.type = 'square'; osc.frequency.setValueAtTime(987.77, audioCtx.currentTime);
-            osc.frequency.setValueAtTime(1318.51, audioCtx.currentTime + 0.08);
-            gain.gain.setValueAtTime(0.1, audioCtx.currentTime); gain.gain.setValueAtTime(0.3, audioCtx.currentTime + 0.08);
-            gain.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.3);
-            osc.start(); osc.stop(audioCtx.currentTime + 0.3);
+            try {
+                initAudio();
+                const osc = audioCtx.createOscillator(); const gain = audioCtx.createGain();
+                osc.connect(gain); gain.connect(audioCtx.destination);
+                osc.type = 'square'; osc.frequency.setValueAtTime(987.77, audioCtx.currentTime);
+                osc.frequency.setValueAtTime(1318.51, audioCtx.currentTime + 0.08);
+                gain.gain.setValueAtTime(0.1, audioCtx.currentTime); gain.gain.setValueAtTime(0.3, audioCtx.currentTime + 0.08);
+                gain.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.3);
+                osc.start(); osc.stop(audioCtx.currentTime + 0.3);
+            } catch(e) { console.log("Sonido desactivado temporalmente"); }
         }
 
         // === 3. SISTEMA DE TEMAS ===
@@ -222,11 +233,9 @@
         // === 4. HISTORIAL DE RESPALDOS TIPO OFFICE ===
         async function triggerAutoBackup(actionDescription) {
             try {
-                // Obtenemos los datos actuales de Firebase
                 const goalsSnap = await db.collection("goals").get();
                 const movesSnap = await db.collection("movements").get();
                 
-                // Creamos el paquete del respaldo
                 const backup = {
                     id: Date.now(),
                     action: actionDescription,
@@ -235,18 +244,10 @@
                     movements: movesSnap.docs.map(d => ({id: d.id, ...d.data()}))
                 };
 
-                // Recuperamos la lista de la memoria local
                 let history = JSON.parse(localStorage.getItem('ahorros_backups_list') || '[]');
-                
-                // Agregamos el nuevo al inicio de la lista
                 history.unshift(backup);
-                
-                // Si hay más de 15, borramos el más viejo para no saturar el almacenamiento
                 if (history.length > 15) history.pop();
-                
-                // Guardamos la lista actualizada
                 localStorage.setItem('ahorros_backups_list', JSON.stringify(history));
-                console.log(`Respaldo creado: ${actionDescription}`);
             } catch(e) { console.error("Error en auto-respaldo", e); }
         }
 
@@ -290,15 +291,13 @@
             await db.collection("movements").add({
                 title: title, amount: amount, type: type, date: new Date().toISOString()
             });
-            // Una vez que el movimiento se guardó, disparamos el auto-respaldo
             await triggerAutoBackup(actionDescForBackup); 
         }
 
-        // === 6. FIREBASE REALTIME Y ANIMACIONES ===
+        // === 6. FIREBASE REALTIME Y ANIMACIONES (¡CORREGIDO!) ===
         const mxn = new Intl.NumberFormat('es-MX', { style: 'currency', currency: 'MXN', maximumFractionDigits: 0 });
         let currentGoal = null;
 
-        // Escuchar Metas (Con animación en tiempo real arreglada)
         db.collection("goals").orderBy("createdAt", "desc").onSnapshot(snapshot => {
             const loading = document.getElementById('loadingText');
             if (loading) loading.remove();
@@ -321,9 +320,9 @@
                             <span class="goal-amount">${mxn.format(goal.amount)}</span>
                         </div>
                         <div class="progress-wrapper">
-                            <div class="progress-fill" id="fill-${goal.id}" style="width: 0%"></div>
+                            <div class="progress-fill" style="width: 0%"></div>
                         </div>
-                        <div class="progress-text" id="text-${goal.id}">${goal.paidCount} / ${reqPayments} pagos completados</div>
+                        <div class="progress-text">${goal.paidCount} / ${reqPayments} pagos completados</div>
                     `;
                     
                     if (list.children.length === 0 || change.newIndex >= list.children.length) {
@@ -333,16 +332,23 @@
                     }
                     
                     el.onclick = () => openCheckin(goal);
-                    // Retrasamos unos milisegundos para que se vea la animación al crear la tarjeta
-                    setTimeout(() => { document.getElementById(`fill-${goal.id}`).style.width = `${percentage}%`; }, 50);
+                    
+                    // MÉTODO SEGURO: Buscar la barra solo dentro de esta tarjeta
+                    setTimeout(() => { 
+                        const fill = el.querySelector('.progress-fill');
+                        if (fill) fill.style.width = `${percentage}%`; 
+                    }, 50);
 
                 } else if (change.type === "modified") {
-                    // Si se modificó (ej. hiciste checkin), se anima frente a tus ojos sin recargar
                     const el = document.getElementById(`goal-${goal.id}`);
                     if (el) {
                         el.onclick = () => openCheckin(goal);
-                        document.getElementById(`fill-${goal.id}`).style.width = `${percentage}%`;
-                        document.getElementById(`text-${goal.id}`).innerText = `${goal.paidCount} / ${reqPayments} pagos completados`;
+                        // MÉTODO SEGURO: Evita el error 'null'
+                        const fill = el.querySelector('.progress-fill');
+                        const text = el.querySelector('.progress-text');
+                        
+                        if (fill) fill.style.width = `${percentage}%`;
+                        if (text) text.innerText = `${goal.paidCount} / ${reqPayments} pagos completados`;
                     }
                 } else if (change.type === "removed") {
                     const el = document.getElementById(`goal-${goal.id}`);
@@ -380,7 +386,7 @@
 
         document.getElementById('btnAdd').onclick = () => openModal('addModal');
         document.getElementById('btnConfig').onclick = () => {
-            refreshBackupDropdown(); // Cargamos la lista de la máquina del tiempo
+            refreshBackupDropdown(); 
             openModal('configModal');
         };
 
@@ -401,7 +407,6 @@
             };
 
             await db.collection("goals").add(newGoal);
-            // El logMovement llamará a triggerAutoBackup
             await logMovement(`Suscripción Creada: ${newGoal.name}`, newGoal.amount, 'out', `Se creó: ${newGoal.name}`);
             
             playSuccessSound();
@@ -471,14 +476,12 @@
                 try {
                     const batch = db.batch();
                     
-                    // 1. Borrar TODO lo que hay en la nube actualmente
                     const currentGoals = await db.collection("goals").get();
                     currentGoals.forEach(doc => batch.delete(doc.ref));
                     
                     const currentMoves = await db.collection("movements").get();
                     currentMoves.forEach(doc => batch.delete(doc.ref));
 
-                    // 2. Insertar los datos del respaldo seleccionado
                     backup.goals.forEach(g => {
                         const ref = db.collection("goals").doc(g.id);
                         const data = {...g}; delete data.id; 
@@ -491,7 +494,6 @@
                         batch.set(ref, data);
                     });
 
-                    // 3. Ejecutar todos los cambios de golpe
                     await batch.commit();
                     
                     alert("¡Viaje en el tiempo exitoso! Tus datos han sido restaurados.");
