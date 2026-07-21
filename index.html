@@ -9,7 +9,7 @@
     <link rel="manifest" href="manifest.json">
     <meta name="theme-color" content="#d90429">
     
-    <!-- Firebase Compat (Fácil de usar en un solo archivo) -->
+    <!-- Firebase Compat -->
     <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
     <!-- Confetti -->
@@ -18,17 +18,9 @@
     <style>
         /* === SISTEMA DE TEMAS === */
         :root {
-            /* Tema Banco (Predeterminado) */
-            --bg-color: #f4f6f8;
-            --card-bg: #ffffff;
-            --primary: #d90429;
-            --secondary: #2b2d42;
-            --secondary-dark: #1a1b28;
-            --tertiary: #4CAF50;
-            --text-main: #14213d;
-            --text-muted: #8d99ae;
-            --shadow: rgba(0, 0, 0, 0.08);
-            --modal-bg: rgba(20, 33, 61, 0.8);
+            --bg-color: #f4f6f8; --card-bg: #ffffff; --primary: #d90429; --secondary: #2b2d42;
+            --secondary-dark: #1a1b28; --tertiary: #4CAF50; --text-main: #14213d;
+            --text-muted: #8d99ae; --shadow: rgba(0, 0, 0, 0.08); --modal-bg: rgba(20, 33, 61, 0.8);
         }
 
         [data-theme="claro"] {
@@ -47,9 +39,7 @@
         }
 
         * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Segoe UI', Tahoma, sans-serif; }
-
         body { background-color: var(--bg-color); color: var(--text-main); padding: 20px; padding-bottom: 90px; transition: background 0.3s; }
-        
         .container { width: 100%; max-width: 500px; margin: 0 auto; }
 
         .header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; }
@@ -57,21 +47,18 @@
         h2 { font-size: 1.2rem; color: var(--secondary); margin-bottom: 15px; border-bottom: 2px solid var(--shadow); padding-bottom: 5px;}
 
         .btn-icon { background: var(--card-bg); border: none; font-size: 1.2rem; cursor: pointer; padding: 10px; border-radius: 50%; box-shadow: 0 4px 10px var(--shadow); color: var(--text-main);}
-        
         button { cursor: pointer; outline: none; }
         .main-btn { width: 100%; padding: 15px; background-color: var(--primary); color: white; border: none; border-radius: 12px; font-size: 1.1rem; font-weight: bold; transition: transform 0.2s; }
         .main-btn:active { transform: scale(0.98); }
         .action-btn { width: 100%; padding: 12px; margin-bottom: 10px; background-color: var(--secondary); color: white; border: none; border-radius: 10px; font-weight: bold; }
-        .close-btn { background-color: transparent; color: var(--text-muted); border: 1px solid var(--text-muted); }
+        .close-btn { background-color: transparent; color: var(--text-muted); border: 1px solid var(--text-muted); margin-bottom: 0;}
 
         input, select { width: 100%; padding: 12px; margin-top: 5px; margin-bottom: 15px; border: 2px solid var(--shadow); border-radius: 10px; font-size: 1rem; background: var(--card-bg); color: var(--text-main); }
-        
         .color-picker-container { display: flex; align-items: center; gap: 10px; margin-bottom: 15px; }
         input[type="color"] { width: 50px; height: 50px; padding: 0; border: none; border-radius: 50%; cursor: pointer; }
 
-        /* Tarjetas de Metas */
         .goal-list { display: flex; flex-direction: column; gap: 15px; margin-bottom: 30px; }
-        .goal-item { background: var(--card-bg); border-left: 6px solid var(--card-color, var(--primary)); padding: 15px; border-radius: 12px; box-shadow: 0 4px 10px var(--shadow); position: relative; cursor: pointer; }
+        .goal-item { background: var(--card-bg); border-left: 6px solid var(--card-color, var(--primary)); padding: 15px; border-radius: 12px; box-shadow: 0 4px 10px var(--shadow); cursor: pointer; }
         .goal-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 5px; }
         .goal-title { font-size: 1.1rem; font-weight: bold; }
         .goal-amount { color: var(--text-main); font-weight: bold; }
@@ -79,14 +66,6 @@
         .progress-fill { background-color: var(--card-color, var(--primary)); height: 100%; width: 0%; transition: width 0.5s ease; }
         .progress-text { font-size: 0.8rem; color: var(--text-muted); margin-top: 5px; text-align: right; }
 
-        /* Skeleton Loading */
-        .skeleton { background: linear-gradient(90deg, var(--shadow) 25%, var(--bg-color) 50%, var(--shadow) 75%); background-size: 200% 100%; animation: shimmer 1.5s infinite; border-radius: 8px; }
-        @keyframes shimmer { 0% { background-position: 200% 0; } 100% { background-position: -200% 0; } }
-        .skeleton-card { background: var(--card-bg); padding: 15px; border-radius: 12px; margin-bottom: 15px; height: 100px; display: flex; flex-direction: column; gap: 10px; }
-        .sk-title { height: 20px; width: 60%; }
-        .sk-bar { height: 8px; width: 100%; margin-top: auto; }
-
-        /* Últimos Movimientos */
         .movements-list { background: var(--card-bg); border-radius: 15px; padding: 15px; box-shadow: 0 4px 10px var(--shadow); max-height: 250px; overflow-y: auto; }
         .movement-item { display: flex; justify-content: space-between; padding: 10px 0; border-bottom: 1px solid var(--shadow); font-size: 0.9rem; }
         .movement-item:last-child { border-bottom: none; }
@@ -94,15 +73,12 @@
         .mov-positive { color: var(--tertiary); font-weight: bold; }
         .mov-negative { color: var(--primary); font-weight: bold; }
 
-        /* Botón Flotante (FAB) */
         .fab { position: fixed; bottom: 20px; right: 20px; width: 65px; height: 65px; background-color: var(--primary); color: white; border-radius: 50%; font-size: 2rem; display: flex; align-items: center; justify-content: center; box-shadow: 0 6px 15px rgba(0,0,0,0.3); border: none; z-index: 100; transition: transform 0.2s; }
         .fab:hover { transform: scale(1.05); }
 
-        /* Modales */
         .modal { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: var(--modal-bg); z-index: 1000; justify-content: center; align-items: center; backdrop-filter: blur(5px); animation: fadeIn 0.2s; }
         .modal-content { background: var(--card-bg); padding: 25px; border-radius: 20px; width: 90%; max-width: 400px; max-height: 90vh; overflow-y: auto; box-shadow: 0 10px 30px rgba(0,0,0,0.5); }
         @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
-        
         .delete-btn { background: none; border: none; color: #ff4d4d; margin-top: 15px; font-weight: bold; text-decoration: underline; width: 100%; text-align: center; }
     </style>
 </head>
@@ -111,16 +87,12 @@
     <div class="container">
         <div class="header">
             <h1>Ahorros Hormiga</h1>
-            <button class="btn-icon" id="btnConfig">⚙️</button>
+            <button class="btn-icon" id="btnConfig" title="Configuración">⚙️</button>
         </div>
         
         <h2>Mis Suscripciones</h2>
         <div class="goal-list" id="goalList">
-            <!-- Skeleton de Carga -->
-            <div class="skeleton-card" id="skeletonLoader">
-                <div class="skeleton sk-title"></div>
-                <div class="skeleton sk-bar"></div>
-            </div>
+            <p style="text-align:center; color: var(--text-muted); font-size:0.9rem;" id="loadingText">Cargando...</p>
         </div>
 
         <h2>Últimos Movimientos</h2>
@@ -151,7 +123,7 @@
                     <input type="color" id="cardColor" value="#d90429">
                 </div>
 
-                <button type="submit" class="main-btn">Guardar Suscripción</button>
+                <button type="submit" class="main-btn" style="margin-bottom:10px;">Guardar Suscripción</button>
                 <button type="button" class="action-btn close-btn" onclick="closeModal('addModal')">Cancelar</button>
             </form>
         </div>
@@ -182,12 +154,16 @@
                 <option value="pastel">🎨 Pastel</option>
             </select>
 
+            <!-- NUEVO SISTEMA DE RESPALDOS TIPO OFFICE -->
             <div style="background: var(--shadow); padding: 15px; border-radius: 10px; margin: 15px 0;">
-                <h4 style="margin-bottom: 5px;">🛡️ Respaldo Automático Local</h4>
+                <h4 style="margin-bottom: 5px;">🕰️ Máquina del Tiempo (Respaldos)</h4>
                 <p style="font-size: 0.8rem; color: var(--text-muted); margin-bottom: 10px;">
-                    Se crea una copia en tu dispositivo por cada cambio detectado en la nube.
+                    La app crea un punto de restauración automáticamente con cada cambio que haces. Selecciona uno para volver en el tiempo:
                 </p>
-                <button class="action-btn" id="btnRestoreLocal" style="background-color: var(--primary);">Restaurar desde Local</button>
+                <select id="backupSelect" style="font-size: 0.85rem;">
+                    <!-- Aquí se cargarán las versiones -->
+                </select>
+                <button class="action-btn" id="btnRestoreLocal" style="background-color: var(--primary);">Restaurar Versión</button>
             </div>
 
             <button class="action-btn close-btn" onclick="closeModal('configModal')">Cerrar</button>
@@ -195,267 +171,346 @@
     </div>
 
     <script>
-// === 1. CONFIGURACIÓN DE FIREBASE ===
-const firebaseConfig = {
-    apiKey: "AIzaSyBnX__R6A6lQw_KuzZxqHRkzZyj10S_4wU",
-    authDomain: "aula-virtual-79e4d.firebaseapp.com",
-    databaseURL: "https://aula-virtual-79e4d-default-rtdb.firebaseio.com",
-    projectId: "aula-virtual-79e4d",
-    storageBucket: "aula-virtual-79e4d.firebasestorage.app",
-    messagingSenderId: "384731632952",
-    appId: "1:384731632952:web:9b4facff98bc7f6ebf5dcd"
-};
-
-firebase.initializeApp(firebaseConfig);
-const db = firebase.firestore();
-
-// === 2. EFECTOS MULTIMEDIA (GAMIFICACIÓN RESTAURADA) ===
-const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
-
-function playSuccessSound() {
-    if (audioCtx.state === 'suspended') audioCtx.resume();
-    const osc = audioCtx.createOscillator();
-    const gain = audioCtx.createGain();
-    osc.connect(gain); gain.connect(audioCtx.destination);
-    osc.type = 'sine';
-    osc.frequency.setValueAtTime(523.25, audioCtx.currentTime); 
-    osc.frequency.exponentialRampToValueAtTime(880, audioCtx.currentTime + 0.1); 
-    gain.gain.setValueAtTime(0.5, audioCtx.currentTime);
-    gain.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.3);
-    osc.start(); osc.stop(audioCtx.currentTime + 0.3);
-}
-
-function playCoinSound() {
-    if (audioCtx.state === 'suspended') audioCtx.resume();
-    const osc = audioCtx.createOscillator();
-    const gain = audioCtx.createGain();
-    osc.connect(gain); gain.connect(audioCtx.destination);
-    osc.type = 'square';
-    osc.frequency.setValueAtTime(987.77, audioCtx.currentTime);
-    osc.frequency.setValueAtTime(1318.51, audioCtx.currentTime + 0.08);
-    gain.gain.setValueAtTime(0.1, audioCtx.currentTime);
-    gain.gain.setValueAtTime(0.3, audioCtx.currentTime + 0.08);
-    gain.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.3);
-    osc.start(); osc.stop(audioCtx.currentTime + 0.3);
-}
-
-// === 3. SISTEMA DE TEMAS ===
-const themeSelect = document.getElementById('themeSelect');
-const savedTheme = localStorage.getItem('appTheme') || 'banco';
-document.documentElement.setAttribute('data-theme', savedTheme);
-themeSelect.value = savedTheme;
-
-themeSelect.addEventListener('change', (e) => {
-    document.documentElement.setAttribute('data-theme', e.target.value);
-    localStorage.setItem('appTheme', e.target.value);
-});
-
-// === 4. RESPALDO AUTOMÁTICO LOCAL ===
-async function triggerAutoBackup() {
-    try {
-        const goalsSnap = await db.collection("goals").get();
-        const movesSnap = await db.collection("movements").get();
-        
-        const backup = {
-            goals: goalsSnap.docs.map(d => ({id: d.id, ...d.data()})),
-            movements: movesSnap.docs.map(d => ({id: d.id, ...d.data()})),
-            timestamp: new Date().toISOString()
+        // === 1. CONFIGURACIÓN DE FIREBASE ===
+        const firebaseConfig = {
+            apiKey: "AIzaSyBnX__R6A6lQw_KuzZxqHRkzZyj10S_4wU",
+            authDomain: "aula-virtual-79e4d.firebaseapp.com",
+            databaseURL: "https://aula-virtual-79e4d-default-rtdb.firebaseio.com",
+            projectId: "aula-virtual-79e4d",
+            storageBucket: "aula-virtual-79e4d.firebasestorage.app",
+            messagingSenderId: "384731632952",
+            appId: "1:384731632952:web:9b4facff98bc7f6ebf5dcd"
         };
-        localStorage.setItem('auto_backup_ahorros', JSON.stringify(backup));
-        console.log("Respaldo automático local guardado.");
-    } catch(e) { console.error("Error en auto-respaldo", e); }
-}
-
-// === 5. LÓGICA DE PAGOS (NÚMEROS CERRADOS) ===
-function calculatePayments(totalAmount, deadlineDate, startDate = new Date()) {
-    const start = new Date(startDate); start.setHours(0,0,0,0);
-    const end = new Date(deadlineDate); end.setDate(end.getDate() + 1); end.setHours(0,0,0,0);
-    if (end <= start) return { count: 0, amountPerPayment: totalAmount };
-    
-    let count = 0;
-    let current = new Date(start); current.setDate(current.getDate() + 1);
-    while (current <= end) {
-        if (current.getDate() === 1 || current.getDate() === 15) count++;
-        current.setDate(current.getDate() + 1);
-    }
-    const amount = count > 0 ? Math.ceil(totalAmount / count) : totalAmount;
-    return { count, amountPerPayment: amount };
-}
-
-// === 6. REGISTRO DE MOVIMIENTOS ===
-async function logMovement(title, amount, type) {
-    await db.collection("movements").add({
-        title: title,
-        amount: amount,
-        type: type,
-        date: new Date().toISOString()
-    });
-    triggerAutoBackup();
-}
-
-// === 7. INTERFAZ Y FIREBASE REALTIME ===
-const mxn = new Intl.NumberFormat('es-MX', { style: 'currency', currency: 'MXN', maximumFractionDigits: 0 });
-let currentGoal = null;
-
-db.collection("goals").orderBy("createdAt", "desc").onSnapshot(snapshot => {
-    const list = document.getElementById('goalList');
-    document.getElementById('skeletonLoader').style.display = 'none';
-    list.innerHTML = '';
-    
-    snapshot.forEach(doc => {
-        const goal = { id: doc.id, ...doc.data() };
-        const reqPayments = goal.totalPayments === 0 ? 1 : goal.totalPayments;
-        const percentage = Math.min((goal.paidCount / reqPayments) * 100, 100);
         
-        const el = document.createElement('div');
-        el.className = 'goal-item';
-        el.style.setProperty('--card-color', goal.color);
-        el.onclick = () => openCheckin(goal);
-        
-        el.innerHTML = `
-            <div class="goal-header">
-                <span class="goal-title">${goal.name}</span>
-                <span class="goal-amount">${mxn.format(goal.amount)}</span>
-            </div>
-            <div class="progress-wrapper">
-                <div class="progress-fill" style="width: ${percentage}%"></div>
-            </div>
-            <div class="progress-text">${goal.paidCount} / ${reqPayments} pagos completados</div>
-        `;
-        list.appendChild(el);
-    });
-});
+        firebase.initializeApp(firebaseConfig);
+        const db = firebase.firestore();
 
-db.collection("movements").orderBy("date", "desc").limit(10).onSnapshot(snapshot => {
-    const list = document.getElementById('movementsList');
-    list.innerHTML = '';
-    if(snapshot.empty) list.innerHTML = '<p style="text-align:center; font-size:0.9rem;">No hay movimientos aún</p>';
-    
-    snapshot.forEach(doc => {
-        const mov = doc.data();
-        const d = new Date(mov.date);
-        const isPos = mov.type === 'in';
-        const sign = isPos ? '+' : '-';
-        const cssClass = isPos ? 'mov-positive' : 'mov-negative';
-        
-        list.innerHTML += `
-            <div class="movement-item">
-                <div>
-                    <strong>${mov.title}</strong>
-                    <span class="mov-date">${d.toLocaleDateString()} ${d.toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})}</span>
-                </div>
-                <span class="${cssClass}">${sign}${mxn.format(mov.amount)}</span>
-            </div>
-        `;
-    });
-});
+        // === 2. GAMIFICACIÓN (SONIDOS) ===
+        const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+        function playSuccessSound() {
+            if (audioCtx.state === 'suspended') audioCtx.resume();
+            const osc = audioCtx.createOscillator(); const gain = audioCtx.createGain();
+            osc.connect(gain); gain.connect(audioCtx.destination);
+            osc.type = 'sine'; osc.frequency.setValueAtTime(523.25, audioCtx.currentTime); 
+            osc.frequency.exponentialRampToValueAtTime(880, audioCtx.currentTime + 0.1); 
+            gain.gain.setValueAtTime(0.5, audioCtx.currentTime); gain.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.3);
+            osc.start(); osc.stop(audioCtx.currentTime + 0.3);
+        }
 
-// === 8. MANEJO DE MODALES Y FORMULARIOS ===
-const openModal = (id) => document.getElementById(id).style.display = 'flex';
-const closeModal = (id) => document.getElementById(id).style.display = 'none';
+        function playCoinSound() {
+            if (audioCtx.state === 'suspended') audioCtx.resume();
+            const osc = audioCtx.createOscillator(); const gain = audioCtx.createGain();
+            osc.connect(gain); gain.connect(audioCtx.destination);
+            osc.type = 'square'; osc.frequency.setValueAtTime(987.77, audioCtx.currentTime);
+            osc.frequency.setValueAtTime(1318.51, audioCtx.currentTime + 0.08);
+            gain.gain.setValueAtTime(0.1, audioCtx.currentTime); gain.gain.setValueAtTime(0.3, audioCtx.currentTime + 0.08);
+            gain.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.3);
+            osc.start(); osc.stop(audioCtx.currentTime + 0.3);
+        }
 
-document.getElementById('btnAdd').onclick = () => openModal('addModal');
-document.getElementById('btnConfig').onclick = () => openModal('configModal');
+        // === 3. SISTEMA DE TEMAS ===
+        const themeSelect = document.getElementById('themeSelect');
+        const savedTheme = localStorage.getItem('appTheme') || 'banco';
+        document.documentElement.setAttribute('data-theme', savedTheme);
+        themeSelect.value = savedTheme;
 
-// Agregar Meta
-document.getElementById('goalForm').onsubmit = async (e) => {
-    e.preventDefault();
-    const amount = parseFloat(document.getElementById('amount').value);
-    const deadline = document.getElementById('deadline').value;
-    const pData = calculatePayments(amount, deadline);
+        themeSelect.addEventListener('change', (e) => {
+            document.documentElement.setAttribute('data-theme', e.target.value);
+            localStorage.setItem('appTheme', e.target.value);
+        });
 
-    const newGoal = {
-        name: document.getElementById('name').value,
-        amount: amount,
-        deadline: deadline,
-        color: document.getElementById('cardColor').value,
-        totalPayments: pData.count,
-        amountPerPayment: pData.amountPerPayment,
-        paidCount: 0,
-        createdAt: new Date().toISOString()
-    };
+        // === 4. HISTORIAL DE RESPALDOS TIPO OFFICE ===
+        async function triggerAutoBackup(actionDescription) {
+            try {
+                // Obtenemos los datos actuales de Firebase
+                const goalsSnap = await db.collection("goals").get();
+                const movesSnap = await db.collection("movements").get();
+                
+                // Creamos el paquete del respaldo
+                const backup = {
+                    id: Date.now(),
+                    action: actionDescription,
+                    date: new Date().toISOString(),
+                    goals: goalsSnap.docs.map(d => ({id: d.id, ...d.data()})),
+                    movements: movesSnap.docs.map(d => ({id: d.id, ...d.data()}))
+                };
 
-    await db.collection("goals").add(newGoal);
-    await logMovement(`Suscripción Creada: ${newGoal.name}`, newGoal.amount, 'out');
-    
-    playSuccessSound(); // ¡Sonido restaurado!
-    confetti({ particleCount: 100, spread: 70, origin: { y: 0.6 }, colors: ['#e07a5f', '#81b29a', '#f2cc8f'] }); // Confeti restaurado
-    
-    closeModal('addModal');
-    document.getElementById('goalForm').reset();
-};
+                // Recuperamos la lista de la memoria local
+                let history = JSON.parse(localStorage.getItem('ahorros_backups_list') || '[]');
+                
+                // Agregamos el nuevo al inicio de la lista
+                history.unshift(backup);
+                
+                // Si hay más de 15, borramos el más viejo para no saturar el almacenamiento
+                if (history.length > 15) history.pop();
+                
+                // Guardamos la lista actualizada
+                localStorage.setItem('ahorros_backups_list', JSON.stringify(history));
+                console.log(`Respaldo creado: ${actionDescription}`);
+            } catch(e) { console.error("Error en auto-respaldo", e); }
+        }
 
-// Abrir Checkin
-function openCheckin(goal) {
-    currentGoal = goal;
-    document.getElementById('ciTitle').innerText = goal.name;
-    document.getElementById('ciAmount').innerText = mxn.format(goal.amountPerPayment);
-    
-    const reqPayments = goal.totalPayments === 0 ? 1 : goal.totalPayments;
-    const btn = document.getElementById('btnMakeCheckin');
-    
-    if(goal.paidCount >= reqPayments) {
-        btn.innerText = "¡Meta Completada!";
-        btn.disabled = true;
-        btn.style.backgroundColor = "var(--tertiary)";
-    } else {
-        btn.innerText = "💰 Registrar Pago";
-        btn.disabled = false;
-        btn.style.backgroundColor = "var(--primary)";
-    }
-    openModal('checkinModal');
-}
+        function refreshBackupDropdown() {
+            const select = document.getElementById('backupSelect');
+            let history = JSON.parse(localStorage.getItem('ahorros_backups_list') || '[]');
+            
+            select.innerHTML = '';
+            if (history.length === 0) {
+                select.innerHTML = '<option value="">Sin respaldos previos...</option>';
+                return;
+            }
 
-// Hacer Checkin
-document.getElementById('btnMakeCheckin').onclick = async () => {
-    if(!currentGoal) return;
-    const reqPayments = currentGoal.totalPayments === 0 ? 1 : currentGoal.totalPayments;
-    const newCount = currentGoal.paidCount + 1;
-    
-    await db.collection("goals").doc(currentGoal.id).update({ paidCount: newCount });
-    await logMovement(`Abono: ${currentGoal.name}`, currentGoal.amountPerPayment, 'in');
-    
-    playCoinSound(); // ¡Sonido de moneda restaurado!
-    
-    if (newCount >= reqPayments) {
-        // Explosión grande si completas la meta
-        confetti({ particleCount: 200, spread: 100, origin: { y: 0.5 } });
-    } else {
-        // Explosión pequeña por un check-in normal
-        confetti({ particleCount: 40, spread: 50, origin: { y: 0.7 }, colors: ['#f2cc8f'] });
-    }
-    
-    closeModal('checkinModal');
-};
+            history.forEach(b => {
+                const opt = document.createElement('option');
+                opt.value = b.id;
+                const dateObj = new Date(b.date);
+                const time = dateObj.toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'});
+                const date = dateObj.toLocaleDateString();
+                opt.text = `${date} ${time} - ${b.action}`;
+                select.appendChild(opt);
+            });
+        }
 
-// Borrar Meta
-document.getElementById('btnDeleteGoal').onclick = async () => {
-    if(confirm("¿Estás seguro de eliminar esta suscripción?")) {
-        await db.collection("goals").doc(currentGoal.id).delete();
-        await logMovement(`Suscripción Eliminada: ${currentGoal.name}`, 0, 'out');
-        closeModal('checkinModal');
-    }
-};
+        // === 5. CÁLCULOS Y MOVIMIENTOS ===
+        function calculatePayments(totalAmount, deadlineDate, startDate = new Date()) {
+            const start = new Date(startDate); start.setHours(0,0,0,0);
+            const end = new Date(deadlineDate); end.setDate(end.getDate() + 1); end.setHours(0,0,0,0);
+            if (end <= start) return { count: 0, amountPerPayment: totalAmount };
+            
+            let count = 0; let current = new Date(start); current.setDate(current.getDate() + 1);
+            while (current <= end) {
+                if (current.getDate() === 1 || current.getDate() === 15) count++;
+                current.setDate(current.getDate() + 1);
+            }
+            const amount = count > 0 ? Math.ceil(totalAmount / count) : totalAmount;
+            return { count, amountPerPayment: amount };
+        }
 
-// Restaurar Backup Local
-document.getElementById('btnRestoreLocal').onclick = () => {
-    const dataStr = localStorage.getItem('auto_backup_ahorros');
-    if(!dataStr) return alert("No hay respaldos locales disponibles.");
-    if(confirm("Esto reescribirá la base de datos de Firebase con tus datos locales. ¿Continuar?")) {
-        const data = JSON.parse(dataStr);
-        alert("Respaldo detectado del: " + new Date(data.timestamp).toLocaleString() + "\n(Lógica de restauración lista en consola)");
-        console.log(data);
-    }
-};
+        async function logMovement(title, amount, type, actionDescForBackup) {
+            await db.collection("movements").add({
+                title: title, amount: amount, type: type, date: new Date().toISOString()
+            });
+            // Una vez que el movimiento se guardó, disparamos el auto-respaldo
+            await triggerAutoBackup(actionDescForBackup); 
+        }
 
-// PWA Service Worker Registration
-if ('serviceWorker' in navigator) {
-    window.addEventListener('load', () => {
-        navigator.serviceWorker.register('sw.js').then(reg => {
-            console.log('Service Worker registrado', reg);
-        }).catch(err => console.log('Error SW', err));
-    });
-}
+        // === 6. FIREBASE REALTIME Y ANIMACIONES ===
+        const mxn = new Intl.NumberFormat('es-MX', { style: 'currency', currency: 'MXN', maximumFractionDigits: 0 });
+        let currentGoal = null;
+
+        // Escuchar Metas (Con animación en tiempo real arreglada)
+        db.collection("goals").orderBy("createdAt", "desc").onSnapshot(snapshot => {
+            const loading = document.getElementById('loadingText');
+            if (loading) loading.remove();
+
+            snapshot.docChanges().forEach(change => {
+                const goal = { id: change.doc.id, ...change.doc.data() };
+                const reqPayments = goal.totalPayments === 0 ? 1 : goal.totalPayments;
+                const percentage = Math.min((goal.paidCount / reqPayments) * 100, 100);
+                const list = document.getElementById('goalList');
+
+                if (change.type === "added") {
+                    const el = document.createElement('div');
+                    el.className = 'goal-item';
+                    el.id = `goal-${goal.id}`;
+                    el.style.setProperty('--card-color', goal.color);
+                    
+                    el.innerHTML = `
+                        <div class="goal-header">
+                            <span class="goal-title">${goal.name}</span>
+                            <span class="goal-amount">${mxn.format(goal.amount)}</span>
+                        </div>
+                        <div class="progress-wrapper">
+                            <div class="progress-fill" id="fill-${goal.id}" style="width: 0%"></div>
+                        </div>
+                        <div class="progress-text" id="text-${goal.id}">${goal.paidCount} / ${reqPayments} pagos completados</div>
+                    `;
+                    
+                    if (list.children.length === 0 || change.newIndex >= list.children.length) {
+                        list.appendChild(el);
+                    } else {
+                        list.insertBefore(el, list.children[change.newIndex]);
+                    }
+                    
+                    el.onclick = () => openCheckin(goal);
+                    // Retrasamos unos milisegundos para que se vea la animación al crear la tarjeta
+                    setTimeout(() => { document.getElementById(`fill-${goal.id}`).style.width = `${percentage}%`; }, 50);
+
+                } else if (change.type === "modified") {
+                    // Si se modificó (ej. hiciste checkin), se anima frente a tus ojos sin recargar
+                    const el = document.getElementById(`goal-${goal.id}`);
+                    if (el) {
+                        el.onclick = () => openCheckin(goal);
+                        document.getElementById(`fill-${goal.id}`).style.width = `${percentage}%`;
+                        document.getElementById(`text-${goal.id}`).innerText = `${goal.paidCount} / ${reqPayments} pagos completados`;
+                    }
+                } else if (change.type === "removed") {
+                    const el = document.getElementById(`goal-${goal.id}`);
+                    if (el) el.remove();
+                }
+            });
+        });
+
+        // Escuchar Movimientos
+        db.collection("movements").orderBy("date", "desc").limit(10).onSnapshot(snapshot => {
+            const list = document.getElementById('movementsList');
+            list.innerHTML = '';
+            if(snapshot.empty) list.innerHTML = '<p style="text-align:center; font-size:0.9rem;">No hay movimientos aún</p>';
+            
+            snapshot.forEach(doc => {
+                const mov = doc.data(); const d = new Date(mov.date);
+                const isPos = mov.type === 'in'; const sign = isPos ? '+' : '-';
+                const cssClass = isPos ? 'mov-positive' : 'mov-negative';
+                
+                list.innerHTML += `
+                    <div class="movement-item">
+                        <div>
+                            <strong>${mov.title}</strong>
+                            <span class="mov-date">${d.toLocaleDateString()} ${d.toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})}</span>
+                        </div>
+                        <span class="${cssClass}">${sign}${mxn.format(mov.amount)}</span>
+                    </div>
+                `;
+            });
+        });
+
+        // === 7. MANEJO DE MODALES ===
+        const openModal = (id) => document.getElementById(id).style.display = 'flex';
+        const closeModal = (id) => document.getElementById(id).style.display = 'none';
+
+        document.getElementById('btnAdd').onclick = () => openModal('addModal');
+        document.getElementById('btnConfig').onclick = () => {
+            refreshBackupDropdown(); // Cargamos la lista de la máquina del tiempo
+            openModal('configModal');
+        };
+
+        // Guardar Suscripción
+        document.getElementById('goalForm').onsubmit = async (e) => {
+            e.preventDefault();
+            const btn = e.target.querySelector('button[type="submit"]');
+            btn.innerText = "Guardando..."; btn.disabled = true;
+
+            const amount = parseFloat(document.getElementById('amount').value);
+            const deadline = document.getElementById('deadline').value;
+            const pData = calculatePayments(amount, deadline);
+
+            const newGoal = {
+                name: document.getElementById('name').value, amount: amount, deadline: deadline,
+                color: document.getElementById('cardColor').value, totalPayments: pData.count,
+                amountPerPayment: pData.amountPerPayment, paidCount: 0, createdAt: new Date().toISOString()
+            };
+
+            await db.collection("goals").add(newGoal);
+            // El logMovement llamará a triggerAutoBackup
+            await logMovement(`Suscripción Creada: ${newGoal.name}`, newGoal.amount, 'out', `Se creó: ${newGoal.name}`);
+            
+            playSuccessSound();
+            confetti({ particleCount: 100, spread: 70, origin: { y: 0.6 }, colors: ['#e07a5f', '#81b29a', '#f2cc8f'] });
+            
+            closeModal('addModal');
+            document.getElementById('goalForm').reset();
+            btn.innerText = "Guardar Suscripción"; btn.disabled = false;
+        };
+
+        // Abrir Checkin
+        function openCheckin(goal) {
+            currentGoal = goal;
+            document.getElementById('ciTitle').innerText = goal.name;
+            document.getElementById('ciAmount').innerText = mxn.format(goal.amountPerPayment);
+            
+            const reqPayments = goal.totalPayments === 0 ? 1 : goal.totalPayments;
+            const btn = document.getElementById('btnMakeCheckin');
+            
+            if(goal.paidCount >= reqPayments) {
+                btn.innerText = "¡Meta Completada!"; btn.disabled = true; btn.style.backgroundColor = "var(--tertiary)";
+            } else {
+                btn.innerText = "💰 Registrar Pago"; btn.disabled = false; btn.style.backgroundColor = "var(--primary)";
+            }
+            openModal('checkinModal');
+        }
+
+        // Hacer Checkin
+        document.getElementById('btnMakeCheckin').onclick = async () => {
+            if(!currentGoal) return;
+            const reqPayments = currentGoal.totalPayments === 0 ? 1 : currentGoal.totalPayments;
+            const newCount = currentGoal.paidCount + 1;
+            
+            document.getElementById('btnMakeCheckin').innerText = "Guardando...";
+            
+            await db.collection("goals").doc(currentGoal.id).update({ paidCount: newCount });
+            await logMovement(`Abono: ${currentGoal.name}`, currentGoal.amountPerPayment, 'in', `Check-in a: ${currentGoal.name}`);
+            
+            playCoinSound();
+            if (newCount >= reqPayments) confetti({ particleCount: 200, spread: 100, origin: { y: 0.5 } });
+            else confetti({ particleCount: 40, spread: 50, origin: { y: 0.7 }, colors: ['#f2cc8f'] });
+            
+            closeModal('checkinModal');
+        };
+
+        // Borrar Suscripción
+        document.getElementById('btnDeleteGoal').onclick = async () => {
+            if(confirm("¿Estás seguro de eliminar esta suscripción?")) {
+                await db.collection("goals").doc(currentGoal.id).delete();
+                await logMovement(`Eliminada: ${currentGoal.name}`, 0, 'out', `Se borró: ${currentGoal.name}`);
+                closeModal('checkinModal');
+            }
+        };
+
+        // Restaurar Versión de la Máquina del Tiempo
+        document.getElementById('btnRestoreLocal').onclick = async () => {
+            const select = document.getElementById('backupSelect');
+            if(!select.value) return alert("Selecciona una versión primero.");
+
+            if(confirm("🚨 ADVERTENCIA: Esto borrará los datos actuales en la nube y los reemplazará con la versión seleccionada. ¿Estás seguro?")) {
+                
+                document.getElementById('btnRestoreLocal').innerText = "Restaurando...";
+                
+                let history = JSON.parse(localStorage.getItem('ahorros_backups_list') || '[]');
+                const backup = history.find(b => b.id.toString() === select.value);
+
+                try {
+                    const batch = db.batch();
+                    
+                    // 1. Borrar TODO lo que hay en la nube actualmente
+                    const currentGoals = await db.collection("goals").get();
+                    currentGoals.forEach(doc => batch.delete(doc.ref));
+                    
+                    const currentMoves = await db.collection("movements").get();
+                    currentMoves.forEach(doc => batch.delete(doc.ref));
+
+                    // 2. Insertar los datos del respaldo seleccionado
+                    backup.goals.forEach(g => {
+                        const ref = db.collection("goals").doc(g.id);
+                        const data = {...g}; delete data.id; 
+                        batch.set(ref, data);
+                    });
+                    
+                    backup.movements.forEach(m => {
+                        const ref = db.collection("movements").doc(m.id);
+                        const data = {...m}; delete data.id;
+                        batch.set(ref, data);
+                    });
+
+                    // 3. Ejecutar todos los cambios de golpe
+                    await batch.commit();
+                    
+                    alert("¡Viaje en el tiempo exitoso! Tus datos han sido restaurados.");
+                    closeModal('configModal');
+                } catch (error) {
+                    console.error("Error restaurando", error);
+                    alert("Hubo un error al intentar restaurar.");
+                } finally {
+                    document.getElementById('btnRestoreLocal').innerText = "Restaurar Versión";
+                }
+            }
+        };
+
+        // PWA Service Worker
+        if ('serviceWorker' in navigator) {
+            window.addEventListener('load', () => {
+                navigator.serviceWorker.register('sw.js').catch(err => console.log('Error SW', err));
+            });
+        }
     </script>
 </body>
 </html>
