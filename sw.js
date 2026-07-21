@@ -1,32 +1,51 @@
-const CACHE_NAME = 'ahorros-hormiga-v1';
+const CACHE_NAME = 'ahorros-hormiga-v2';
 const urlsToCache = [
   './index.html',
   './manifest.json',
   'https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js'
 ];
 
-// Instalar y guardar en caché
+// Instalar y forzar al Service Worker a activarse inmediatamente
 self.addEventListener('install', event => {
+  self.skipWaiting();
   event.waitUntil(
-    caches.open(CACHE_NAME)
-      .then(cache => {
-        return cache.addAll(urlsToCache);
-      })
+    caches.open(CACHE_NAME).then(cache => cache.addAll(urlsToCache))
   );
 });
 
-// Interceptar peticiones para que funcione offline (excepto Firebase)
+// Limpiar cachés viejas cuando hay una nueva versión (v2, v3, etc.)
+self.addEventListener('activate', event => {
+  event.waitUntil(
+    caches.keys().then(cacheNames => {
+      return Promise.all(
+        cacheNames.map(cache => {
+          if (cache !== CACHE_NAME) {
+            return caches.delete(cache);
+          }
+        })
+      );
+    })
+  );
+});
+
+// Estrategia "Network First" (Priorizar Internet)
 self.addEventListener('fetch', event => {
-  // Ignorar las peticiones a Firestore (deben ir por red)
+  // Ignorar Firebase para evitar bloqueos en la base de datos
   if (event.request.url.includes('firestore.googleapis.com')) {
       return; 
   }
 
   event.respondWith(
-    caches.match(event.request)
+    fetch(event.request)
       .then(response => {
-        // Devuelve el archivo en caché si existe, si no, lo busca en internet
-        return response || fetch(event.request);
+        // Si hay internet, descarga la versión más nueva, actualiza la caché y la muestra
+        const resClone = response.clone();
+        caches.open(CACHE_NAME).then(cache => cache.put(event.request, resClone));
+        return response;
+      })
+      .catch(() => {
+        // Si falla (no hay internet), saca la versión guardada de la memoria
+        return caches.match(event.request);
       })
   );
 });
