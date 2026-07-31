@@ -50,9 +50,9 @@
         button { cursor: pointer; outline: none; }
         .main-btn { width: 100%; padding: 15px; background-color: var(--primary); color: white; border: none; border-radius: 12px; font-size: 1.1rem; font-weight: bold; transition: transform 0.2s; }
         .main-btn:active { transform: scale(0.98); }
-        .action-btn { width: 100%; padding: 12px; background-color: var(--secondary); color: white; border: none; border-radius: 10px; font-weight: bold; }
+        .action-btn { width: 100%; padding: 12px; background-color: var(--secondary); color: white; border: none; border-radius: 10px; font-weight: bold; transition: transform 0.2s; }
+        .action-btn:active { transform: scale(0.95); }
         
-        /* Estilo para los botones de cancelar dentro del customDialogModal */
         .close-btn { background-color: transparent; color: var(--text-muted); border: 1px solid var(--text-muted); margin-bottom: 0;}
 
         input, select { width: 100%; padding: 12px; margin-top: 5px; margin-bottom: 15px; border: 2px solid var(--shadow); border-radius: 10px; font-size: 1rem; background: var(--card-bg); color: var(--text-main); }
@@ -60,17 +60,27 @@
         input[type="color"] { width: 50px; height: 50px; padding: 0; border: none; border-radius: 50%; cursor: pointer; }
 
         .goal-list { display: flex; flex-direction: column; gap: 15px; margin-bottom: 30px; }
-        .goal-item { background: var(--card-bg); border-left: 6px solid var(--card-color, var(--primary)); padding: 15px; border-radius: 12px; box-shadow: 0 4px 10px var(--shadow); cursor: pointer; }
+        .goal-item { background: var(--card-bg); border-left: 6px solid var(--card-color, var(--primary)); padding: 15px; border-radius: 12px; box-shadow: 0 4px 10px var(--shadow); cursor: pointer; transition: transform 0.2s; }
+        .goal-item:active { transform: scale(0.98); }
         .goal-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 5px; }
         .goal-title { font-size: 1.1rem; font-weight: bold; }
         .goal-amount { color: var(--text-main); font-weight: bold; }
         
-        .next-payment { font-size: 2rem; font-weight: bold; margin: 8px 0; display: flex; align-items: baseline; gap: 8px; }
-        .next-payment-label { font-size: 0.9rem; color: var(--text-muted); font-weight: normal; }
+        /* TEXTO GIGANTE DEL PAGO */
+        .next-payment { font-size: 2rem; font-weight: bold; margin: 8px 0; display: flex; align-items: baseline; gap: 8px; flex-wrap: wrap;}
+        .next-payment-label { font-size: 0.95rem; color: var(--text-muted); font-weight: bold; background: var(--bg-color); padding: 4px 10px; border-radius: 20px; }
         
         .progress-wrapper { background-color: var(--shadow); border-radius: 10px; height: 8px; width: 100%; overflow: hidden; margin-top: 10px; }
         .progress-fill { background-color: var(--card-color, var(--primary)); height: 100%; width: 0%; transition: width 0.5s ease; }
         .progress-text { font-size: 0.8rem; color: var(--text-muted); margin-top: 5px; text-align: right; font-weight: bold;}
+
+        /* MINI CALENDARIO */
+        .mini-calendar-container { display: flex; gap: 8px; overflow-x: auto; padding: 5px 0 15px 0; scrollbar-width: none; }
+        .mini-calendar-container::-webkit-scrollbar { display: none; }
+        .cal-day { min-width: 50px; display: flex; flex-direction: column; align-items: center; background: var(--bg-color); border-radius: 12px; padding: 8px 5px; color: var(--text-muted); border: 1px solid var(--shadow); transition: all 0.3s; }
+        .cal-day.today { background: var(--primary); color: white; border-color: var(--primary); font-weight: bold; transform: translateY(-2px); box-shadow: 0 4px 10px var(--shadow); }
+        .cal-day .day-name { text-transform: uppercase; font-size: 0.65rem; margin-bottom: 2px; }
+        .cal-day .day-num { font-size: 1.2rem; font-weight: bold; }
 
         .movements-list { background: var(--card-bg); border-radius: 15px; padding: 15px; box-shadow: 0 4px 10px var(--shadow); max-height: 250px; overflow-y: auto; }
         .movement-item { display: flex; justify-content: space-between; padding: 10px 0; border-bottom: 1px solid var(--shadow); font-size: 0.9rem; }
@@ -83,7 +93,6 @@
         .fab:hover { transform: scale(1.05); }
 
         .modal { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: var(--modal-bg); z-index: 1000; justify-content: center; align-items: center; backdrop-filter: blur(5px); animation: fadeIn 0.2s; }
-        
         .modal-content { background: var(--card-bg); padding: 25px; border-radius: 20px; width: 90%; max-width: 400px; max-height: 90vh; overflow-y: auto; box-shadow: 0 10px 30px rgba(0,0,0,0.5); }
         .modal-content.dual-pane { max-width: 700px; display: flex; flex-direction: column; gap: 20px; }
         .pane-left, .pane-right { flex: 1; display: flex; flex-direction: column; }
@@ -93,13 +102,16 @@
             .pane-right { border-left: 2px solid var(--shadow); padding-left: 20px; }
         }
 
-        .history-list { max-height: 200px; overflow-y: auto; margin-top: 10px; padding-right: 5px; }
+        .history-list { max-height: 150px; overflow-y: auto; padding-right: 5px; }
         .history-mini-item { display: flex; justify-content: space-between; font-size: 0.85rem; padding: 8px 0; border-bottom: 1px solid var(--shadow); }
 
         @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
         
         .dialog-buttons { display: flex; gap: 10px; margin-top: 20px; }
-        .action-row { display: flex; gap: 10px; margin-top: 15px; }
+        .action-row { display: flex; gap: 15px; margin-top: 15px; justify-content: center; }
+        
+        /* Botones Minimalistas de Edición/Borrado */
+        .action-btn.icon-only { width: 55px; height: 55px; border-radius: 15px; font-size: 1.5rem; display: flex; align-items: center; justify-content: center; padding: 0; flex: none; }
     </style>
 </head>
 <body>
@@ -146,12 +158,12 @@
                     <input type="color" id="cardColor" value="#d90429">
                 </div>
 
-                <button type="submit" class="main-btn" style="margin-bottom:10px;">Guardar Suscripción</button>
+                <button type="submit" class="main-btn">Guardar Suscripción</button>
             </form>
         </div>
     </div>
 
-    <!-- NUEVO: Modal Editar Suscripción -->
+    <!-- Modal Editar Suscripción -->
     <div class="modal" id="editModal">
         <div class="modal-content">
             <h2 style="border:none; color:var(--primary); text-align:center;">Editar Suscripción</h2>
@@ -170,7 +182,7 @@
                     <input type="color" id="editCardColor">
                 </div>
 
-                <button type="submit" class="main-btn" style="margin-bottom:10px;">Guardar Cambios</button>
+                <button type="submit" class="main-btn">Guardar Cambios</button>
             </form>
         </div>
     </div>
@@ -180,20 +192,25 @@
         <div class="modal-content dual-pane">
             <div class="pane-left" style="text-align: center;">
                 <h2 id="ciTitle" style="border:none;">Suscripción</h2>
-                <p style="color: var(--text-muted);">Siguiente pago (Día 1 o 15):</p>
-                <h1 id="ciAmount" style="font-size: 2.5rem; margin: 15px 0;">$0</h1>
+                <h1 id="ciAmount" style="font-size: 2.8rem; margin: 15px 0;">$0</h1>
                 
                 <button class="main-btn" id="btnMakeCheckin">💰 Registrar Pago</button>
                 
-                <!-- Botones de Acción Secundarios -->
+                <!-- Botones Minimalistas -->
                 <div class="action-row">
-                    <button class="action-btn" id="btnEditGoal" style="flex: 1; margin: 0; background-color: var(--secondary);">✏️ Editar</button>
-                    <button class="action-btn" id="btnDeleteGoal" style="flex: 1; margin: 0; background-color: #ff4d4d;">🗑️ Borrar</button>
+                    <button class="action-btn icon-only" id="btnEditGoal" style="background-color: var(--secondary);" title="Editar">✏️</button>
+                    <button class="action-btn icon-only" id="btnDeleteGoal" style="background-color: #ff4d4d;" title="Borrar">🗑️</button>
                 </div>
             </div>
             
             <div class="pane-right">
-                <h3 style="color: var(--secondary); font-size: 1.1rem; border-bottom: 1px solid var(--shadow); padding-bottom: 5px;">Historial de esta meta</h3>
+                <h3 style="color: var(--secondary); font-size: 1.1rem; border-bottom: 1px solid var(--shadow); padding-bottom: 5px; margin-bottom: 10px;">Historial de esta meta</h3>
+                
+                <!-- Mini Calendario -->
+                <div class="mini-calendar-container" id="miniCalendar">
+                    <!-- Javascript insertará los días aquí -->
+                </div>
+
                 <div id="ciHistoryList" class="history-list">
                     <p style="text-align:center; color: var(--text-muted); font-size:0.9rem;">Cargando...</p>
                 </div>
@@ -220,15 +237,15 @@
                 </p>
                 <select id="backupSelect" style="font-size: 0.85rem; margin-bottom: 10px;">
                 </select>
-                <button class="action-btn" id="btnRestoreLocal" style="background-color: var(--primary);">Restaurar Versión</button>
+                <button class="action-btn" id="btnRestoreLocal" style="background-color: var(--primary); width: 100%;">Restaurar Versión</button>
             </div>
 
             <div style="background: rgba(217, 4, 41, 0.1); padding: 15px; border-radius: 10px; margin: 15px 0; border: 1px solid var(--primary);">
                 <h4 style="margin-bottom: 5px; color: var(--primary);">⚠️ Zona de Peligro</h4>
                 <p style="font-size: 0.8rem; color: var(--text-muted); margin-bottom: 10px;">
-                    Borra toda la base de datos para empezar desde cero. Esta acción no se puede deshacer.
+                    Borra toda la base de datos para empezar desde cero.
                 </p>
-                <button class="action-btn" id="btnWipeDB" style="background-color: var(--primary); margin-bottom: 0;">Empezar de 0 (Borrar Todo)</button>
+                <button class="action-btn" id="btnWipeDB" style="background-color: var(--primary); margin-bottom: 0; width: 100%;">Empezar de 0 (Borrar Todo)</button>
             </div>
         </div>
     </div>
@@ -335,7 +352,7 @@
             });
         }
 
-        // === 5. CÁLCULOS Y MOVIMIENTOS ===
+        // === 5. CÁLCULOS, MOVIMIENTOS Y FECHAS ===
         function calculatePayments(totalAmount, deadlineDate, startDate = new Date()) {
             const start = new Date(startDate); start.setHours(0,0,0,0);
             const end = new Date(deadlineDate); end.setDate(end.getDate() + 1); end.setHours(0,0,0,0);
@@ -347,6 +364,28 @@
                 current.setDate(current.getDate() + 1);
             }
             return { count };
+        }
+        
+        // Algoritmo para encontrar el nombre exacto de la próxima fecha de pago
+        function getNextPaymentDateStr(createdAt, paidCount) {
+            let searchDate = new Date(createdAt);
+            searchDate.setHours(0,0,0,0);
+            searchDate.setDate(searchDate.getDate() + 1); // Empieza a buscar desde el día siguiente a la creación
+            
+            let found = 0;
+            // Avanza en el calendario hasta encontrar la quincena correspondiente a tu número de pago
+            while(found < paidCount + 1) {
+                let d = searchDate.getDate();
+                if (d === 1 || d === 15) {
+                    found++;
+                }
+                if (found < paidCount + 1) {
+                    searchDate.setDate(searchDate.getDate() + 1);
+                }
+            }
+            
+            const months = ['Ene', 'Feb', 'Mar', 'Abr', 'May', 'Jun', 'Jul', 'Ago', 'Sep', 'Oct', 'Nov', 'Dic'];
+            return `${months[searchDate.getMonth()]} ${searchDate.getDate()}`;
         }
 
         async function logMovement(title, amount, type, actionDescForBackup, goalId = null) {
@@ -371,7 +410,8 @@
                     id: change.doc.id, 
                     ...data,
                     savedAmount: data.savedAmount !== undefined ? data.savedAmount : ((data.paidCount || 0) * data.amountPerPayment),
-                    targetAmount: data.targetAmount !== undefined ? data.targetAmount : data.amount
+                    targetAmount: data.targetAmount !== undefined ? data.targetAmount : data.amount,
+                    paidCount: data.paidCount || 0 // Usado para calcular la fecha exacta
                 };
                 
                 const percentage = Math.min((goal.savedAmount / goal.targetAmount) * 100, 100);
@@ -381,9 +421,11 @@
                 let nextPayment = goal.amountPerPayment;
                 if (nextPayment > remainingToSave) nextPayment = remainingToSave;
                 
+                let nextPaymentDate = getNextPaymentDateStr(goal.createdAt, goal.paidCount);
+                
                 let paymentDisplay = remainingToSave <= 0 
                     ? `¡Completado! 🎉`
-                    : `${mxn.format(nextPayment)} <span class="next-payment-label">siguiente pago</span>`;
+                    : `${mxn.format(nextPayment)} <span class="next-payment-label">Sig. pago: ${nextPaymentDate}</span>`;
                 let paymentColor = remainingToSave <= 0 ? 'var(--tertiary)' : 'var(--text-main)';
 
                 if (change.type === "added") {
@@ -425,10 +467,8 @@
                         const text = el.querySelector('.progress-text');
                         const nextPaymentEl = document.getElementById(`nextPayment-${goal.id}`);
                         
-                        // Reflejamos el color modificado si aplica
                         el.style.setProperty('--card-color', goal.color);
                         
-                        // Reflejamos el nuevo nombre y meta en la UI base
                         const titleEl = el.querySelector('.goal-title');
                         const targetEl = el.querySelector('.goal-amount');
                         if (titleEl) titleEl.innerText = goal.name;
@@ -472,22 +512,45 @@
             });
         });
 
-        // === 7. MANEJO DE MODALES Y CLICKS FUERA ===
+        // === 7. MANEJO DE MODALES Y COMPONENTES UI ===
         const openModal = (id) => document.getElementById(id).style.display = 'flex';
         const closeModal = (id) => document.getElementById(id).style.display = 'none';
 
         // Cerrar ventana si se hace clic fuera del contenido
         window.addEventListener('click', (e) => {
             if (e.target.classList.contains('modal')) {
-                // Prevenimos que se cierre el dialog de confirmación accidentalmente
-                if (e.target.id !== 'customDialogModal') {
-                    closeModal(e.target.id);
-                }
+                if (e.target.id !== 'customDialogModal') closeModal(e.target.id);
             }
         });
 
         document.getElementById('btnAdd').onclick = () => openModal('addModal');
         document.getElementById('btnConfig').onclick = () => { refreshBackupDropdown(); openModal('configModal'); };
+
+        // Renderizado del Mini-Calendario
+        function renderMiniCalendar() {
+            const container = document.getElementById('miniCalendar');
+            if(!container) return;
+            container.innerHTML = '';
+            
+            const today = new Date();
+            const days = ['Dom', 'Lun', 'Mar', 'Mié', 'Jue', 'Vie', 'Sáb'];
+            
+            for(let i = 0; i < 8; i++) {
+                let d = new Date(today);
+                d.setDate(d.getDate() + i);
+                
+                let dayName = days[d.getDay()];
+                let dayNum = d.getDate();
+                let isToday = i === 0;
+                
+                container.innerHTML += `
+                    <div class="cal-day ${isToday ? 'today' : ''}">
+                        <span class="day-name">${dayName}</span>
+                        <span class="day-num">${dayNum}</span>
+                    </div>
+                `;
+            }
+        }
 
         // SISTEMA DE DIÁLOGOS NATIVOS
         function showDialog(title, message, type, onConfirmCallback = null) {
@@ -552,6 +615,7 @@
                 color: document.getElementById('cardColor').value, 
                 totalPayments: pData.count,
                 amountPerPayment: amountPerPayment, 
+                paidCount: 0, // Inicia el contador de pagos de la app
                 createdAt: new Date().toISOString()
             };
 
@@ -589,6 +653,9 @@
                 document.getElementById('ciAmount').innerText = mxn.format(nextPayment);
                 btn.innerText = "💰 Registrar Pago"; btn.disabled = false; btn.style.backgroundColor = "var(--primary)";
             }
+            
+            // Cargar el Mini-Calendario visual
+            renderMiniCalendar();
 
             if (unsubscribeHistory) unsubscribeHistory();
             unsubscribeHistory = db.collection("movements")
@@ -637,8 +704,9 @@
             }
             
             const newSavedAmount = currentGoal.savedAmount + depositAmount;
+            const newPaidCount = (currentGoal.paidCount || 0) + 1; // Suma 1 al contador para mover la fecha inteligentemente
             
-            await db.collection("goals").doc(currentGoal.id).update({ savedAmount: newSavedAmount });
+            await db.collection("goals").doc(currentGoal.id).update({ savedAmount: newSavedAmount, paidCount: newPaidCount });
             await logMovement(`Abono: ${currentGoal.name}`, depositAmount, 'in', `Check-in a: ${currentGoal.name}`, currentGoal.id);
             
             playCoinSound();
@@ -672,7 +740,6 @@
             const name = document.getElementById('editName').value;
             const color = document.getElementById('editCardColor').value;
 
-            // Recalculamos los pagos basándonos en la nueva meta y fecha
             const pData = calculatePayments(targetAmount, deadline);
             const remainingAmount = targetAmount - currentGoal.savedAmount;
             
@@ -680,7 +747,7 @@
             if (pData.count > 0 && remainingAmount > 0) {
                 amountPerPayment = Math.ceil(remainingAmount / pData.count);
             } else if (remainingAmount <= 0) {
-                amountPerPayment = 0; // Si redujo la meta por debajo de lo que ya tenía ahorrado
+                amountPerPayment = 0; 
             }
 
             const updatedGoal = {
@@ -693,8 +760,6 @@
             };
 
             await db.collection("goals").doc(currentGoal.id).update(updatedGoal);
-            
-            // Disparamos un respaldo solo del evento de edición
             await triggerAutoBackup(`Se editó suscripción: ${name}`);
 
             closeModal('editModal');
