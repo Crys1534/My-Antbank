@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Ahorros Hormiga</title>
+    <title>My AntBank</title>
     
     <!-- PWA Manifest -->
     <link rel="manifest" href="manifest.json">
@@ -50,7 +50,9 @@
         button { cursor: pointer; outline: none; }
         .main-btn { width: 100%; padding: 15px; background-color: var(--primary); color: white; border: none; border-radius: 12px; font-size: 1.1rem; font-weight: bold; transition: transform 0.2s; }
         .main-btn:active { transform: scale(0.98); }
-        .action-btn { width: 100%; padding: 12px; margin-bottom: 10px; background-color: var(--secondary); color: white; border: none; border-radius: 10px; font-weight: bold; }
+        .action-btn { width: 100%; padding: 12px; background-color: var(--secondary); color: white; border: none; border-radius: 10px; font-weight: bold; }
+        
+        /* Estilo para los botones de cancelar dentro del customDialogModal */
         .close-btn { background-color: transparent; color: var(--text-muted); border: 1px solid var(--text-muted); margin-bottom: 0;}
 
         input, select { width: 100%; padding: 12px; margin-top: 5px; margin-bottom: 15px; border: 2px solid var(--shadow); border-radius: 10px; font-size: 1rem; background: var(--card-bg); color: var(--text-main); }
@@ -63,7 +65,6 @@
         .goal-title { font-size: 1.1rem; font-weight: bold; }
         .goal-amount { color: var(--text-main); font-weight: bold; }
         
-        /* NUEVAS CLASES PARA EL TEXTO GIGANTE DEL PAGO */
         .next-payment { font-size: 2rem; font-weight: bold; margin: 8px 0; display: flex; align-items: baseline; gap: 8px; }
         .next-payment-label { font-size: 0.9rem; color: var(--text-muted); font-weight: normal; }
         
@@ -96,16 +97,16 @@
         .history-mini-item { display: flex; justify-content: space-between; font-size: 0.85rem; padding: 8px 0; border-bottom: 1px solid var(--shadow); }
 
         @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
-        .delete-btn { background: none; border: none; color: #ff4d4d; margin-top: 15px; font-weight: bold; text-decoration: underline; width: 100%; text-align: center; }
         
         .dialog-buttons { display: flex; gap: 10px; margin-top: 20px; }
+        .action-row { display: flex; gap: 10px; margin-top: 15px; }
     </style>
 </head>
 <body>
 
     <div class="container">
         <div class="header">
-            <h1>Ahorros Hormiga</h1>
+            <h1>My AntBank</h1>
             <button class="btn-icon" id="btnConfig" title="Configuración">⚙️</button>
         </div>
         
@@ -146,7 +147,30 @@
                 </div>
 
                 <button type="submit" class="main-btn" style="margin-bottom:10px;">Guardar Suscripción</button>
-                <button type="button" class="action-btn close-btn" onclick="closeModal('addModal')">Cancelar</button>
+            </form>
+        </div>
+    </div>
+
+    <!-- NUEVO: Modal Editar Suscripción -->
+    <div class="modal" id="editModal">
+        <div class="modal-content">
+            <h2 style="border:none; color:var(--primary); text-align:center;">Editar Suscripción</h2>
+            <form id="editForm">
+                <label>Nombre de la meta/suscripción</label>
+                <input type="text" id="editName" required>
+                
+                <label>Nuevo Costo Total ($)</label>
+                <input type="number" id="editTargetAmount" required min="1">
+                
+                <label>Nueva Fecha Límite</label>
+                <input type="date" id="editDeadline" required>
+
+                <div class="color-picker-container">
+                    <label>Color de la Tarjeta:</label>
+                    <input type="color" id="editCardColor">
+                </div>
+
+                <button type="submit" class="main-btn" style="margin-bottom:10px;">Guardar Cambios</button>
             </form>
         </div>
     </div>
@@ -159,10 +183,15 @@
                 <p style="color: var(--text-muted);">Siguiente pago (Día 1 o 15):</p>
                 <h1 id="ciAmount" style="font-size: 2.5rem; margin: 15px 0;">$0</h1>
                 
-                <button class="main-btn" id="btnMakeCheckin" style="margin-bottom: 15px;">💰 Registrar Pago</button>
-                <button class="action-btn close-btn" onclick="closeModal('checkinModal')">Cerrar</button>
-                <button class="delete-btn" id="btnDeleteGoal">Eliminar Suscripción</button>
+                <button class="main-btn" id="btnMakeCheckin">💰 Registrar Pago</button>
+                
+                <!-- Botones de Acción Secundarios -->
+                <div class="action-row">
+                    <button class="action-btn" id="btnEditGoal" style="flex: 1; margin: 0; background-color: var(--secondary);">✏️ Editar</button>
+                    <button class="action-btn" id="btnDeleteGoal" style="flex: 1; margin: 0; background-color: #ff4d4d;">🗑️ Borrar</button>
+                </div>
             </div>
+            
             <div class="pane-right">
                 <h3 style="color: var(--secondary); font-size: 1.1rem; border-bottom: 1px solid var(--shadow); padding-bottom: 5px;">Historial de esta meta</h3>
                 <div id="ciHistoryList" class="history-list">
@@ -199,10 +228,8 @@
                 <p style="font-size: 0.8rem; color: var(--text-muted); margin-bottom: 10px;">
                     Borra toda la base de datos para empezar desde cero. Esta acción no se puede deshacer.
                 </p>
-                <button class="action-btn" id="btnWipeDB" style="background-color: var(--primary);">Empezar de 0 (Borrar Todo)</button>
+                <button class="action-btn" id="btnWipeDB" style="background-color: var(--primary); margin-bottom: 0;">Empezar de 0 (Borrar Todo)</button>
             </div>
-
-            <button class="action-btn close-btn" onclick="closeModal('configModal')">Cerrar</button>
         </div>
     </div>
 
@@ -350,7 +377,6 @@
                 const percentage = Math.min((goal.savedAmount / goal.targetAmount) * 100, 100);
                 const list = document.getElementById('goalList');
 
-                // Lógica de visualización del Siguiente Pago en grande
                 const remainingToSave = goal.targetAmount - goal.savedAmount;
                 let nextPayment = goal.amountPerPayment;
                 if (nextPayment > remainingToSave) nextPayment = remainingToSave;
@@ -399,10 +425,18 @@
                         const text = el.querySelector('.progress-text');
                         const nextPaymentEl = document.getElementById(`nextPayment-${goal.id}`);
                         
+                        // Reflejamos el color modificado si aplica
+                        el.style.setProperty('--card-color', goal.color);
+                        
+                        // Reflejamos el nuevo nombre y meta en la UI base
+                        const titleEl = el.querySelector('.goal-title');
+                        const targetEl = el.querySelector('.goal-amount');
+                        if (titleEl) titleEl.innerText = goal.name;
+                        if (targetEl) targetEl.innerText = `Meta: ${mxn.format(goal.targetAmount)}`;
+
                         if (fill) fill.style.width = `${percentage}%`;
                         if (text) text.innerText = `Ahorrado: ${mxn.format(goal.savedAmount)} / ${mxn.format(goal.targetAmount)}`;
                         
-                        // Actualiza el texto gigante de forma segura
                         if (nextPaymentEl) {
                             nextPaymentEl.innerHTML = paymentDisplay;
                             nextPaymentEl.style.color = paymentColor;
@@ -438,13 +472,14 @@
             });
         });
 
-        // === 7. MANEJO DE MODALES ===
+        // === 7. MANEJO DE MODALES Y CLICKS FUERA ===
         const openModal = (id) => document.getElementById(id).style.display = 'flex';
         const closeModal = (id) => document.getElementById(id).style.display = 'none';
 
-        // CERRAR MODALES HACIENDO CLIC AFUERA
+        // Cerrar ventana si se hace clic fuera del contenido
         window.addEventListener('click', (e) => {
             if (e.target.classList.contains('modal')) {
+                // Prevenimos que se cierre el dialog de confirmación accidentalmente
                 if (e.target.id !== 'customDialogModal') {
                     closeModal(e.target.id);
                 }
@@ -487,7 +522,7 @@
             openModal('customDialogModal');
         }
 
-        // Guardar Suscripción
+        // Guardar Nueva Suscripción
         document.getElementById('goalForm').onsubmit = async (e) => {
             e.preventDefault();
             const btn = e.target.querySelector('button[type="submit"]');
@@ -614,6 +649,56 @@
                 confetti({ particleCount: 40, spread: 50, origin: { y: 0.7 }, colors: ['#f2cc8f'] });
                 document.getElementById('btnMakeCheckin').innerText = "💰 Registrar Pago";
             }
+        };
+
+        // Abrir Modal de Edición
+        document.getElementById('btnEditGoal').onclick = () => {
+            closeModal('checkinModal');
+            document.getElementById('editName').value = currentGoal.name;
+            document.getElementById('editTargetAmount').value = currentGoal.targetAmount;
+            document.getElementById('editDeadline').value = currentGoal.deadline;
+            document.getElementById('editCardColor').value = currentGoal.color;
+            openModal('editModal');
+        };
+
+        // Guardar Edición (Recálculo Automático)
+        document.getElementById('editForm').onsubmit = async (e) => {
+            e.preventDefault();
+            const btn = e.target.querySelector('button[type="submit"]');
+            btn.innerText = "Guardando..."; btn.disabled = true;
+
+            const targetAmount = parseFloat(document.getElementById('editTargetAmount').value);
+            const deadline = document.getElementById('editDeadline').value;
+            const name = document.getElementById('editName').value;
+            const color = document.getElementById('editCardColor').value;
+
+            // Recalculamos los pagos basándonos en la nueva meta y fecha
+            const pData = calculatePayments(targetAmount, deadline);
+            const remainingAmount = targetAmount - currentGoal.savedAmount;
+            
+            let amountPerPayment = targetAmount;
+            if (pData.count > 0 && remainingAmount > 0) {
+                amountPerPayment = Math.ceil(remainingAmount / pData.count);
+            } else if (remainingAmount <= 0) {
+                amountPerPayment = 0; // Si redujo la meta por debajo de lo que ya tenía ahorrado
+            }
+
+            const updatedGoal = {
+                name: name,
+                targetAmount: targetAmount,
+                deadline: deadline,
+                color: color,
+                totalPayments: pData.count,
+                amountPerPayment: amountPerPayment
+            };
+
+            await db.collection("goals").doc(currentGoal.id).update(updatedGoal);
+            
+            // Disparamos un respaldo solo del evento de edición
+            await triggerAutoBackup(`Se editó suscripción: ${name}`);
+
+            closeModal('editModal');
+            btn.innerText = "Guardar Cambios"; btn.disabled = false;
         };
 
         // Borrar Suscripción
