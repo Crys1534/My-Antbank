@@ -66,7 +66,6 @@
         .goal-title { font-size: 1.1rem; font-weight: bold; }
         .goal-amount { color: var(--text-main); font-weight: bold; }
         
-        /* TEXTO GIGANTE DEL PAGO */
         .next-payment { font-size: 2rem; font-weight: bold; margin: 8px 0; display: flex; align-items: baseline; gap: 8px; flex-wrap: wrap;}
         .next-payment-label { font-size: 0.95rem; color: var(--text-muted); font-weight: bold; background: var(--bg-color); padding: 4px 10px; border-radius: 20px; }
         
@@ -74,13 +73,14 @@
         .progress-fill { background-color: var(--card-color, var(--primary)); height: 100%; width: 0%; transition: width 0.5s ease; }
         .progress-text { font-size: 0.8rem; color: var(--text-muted); margin-top: 5px; text-align: right; font-weight: bold;}
 
-        /* MINI CALENDARIO */
+        /* MINI CALENDARIO CON ESTILOS PARA EL PIN 📌 */
         .mini-calendar-container { display: flex; gap: 8px; overflow-x: auto; padding: 5px 0 15px 0; scrollbar-width: none; }
         .mini-calendar-container::-webkit-scrollbar { display: none; }
-        .cal-day { min-width: 50px; display: flex; flex-direction: column; align-items: center; background: var(--bg-color); border-radius: 12px; padding: 8px 5px; color: var(--text-muted); border: 1px solid var(--shadow); transition: all 0.3s; }
+        .cal-day { min-width: 52px; display: flex; flex-direction: column; align-items: center; background: var(--bg-color); border-radius: 12px; padding: 8px 5px 5px 5px; color: var(--text-muted); border: 1px solid var(--shadow); transition: all 0.3s; }
         .cal-day.today { background: var(--primary); color: white; border-color: var(--primary); font-weight: bold; transform: translateY(-2px); box-shadow: 0 4px 10px var(--shadow); }
         .cal-day .day-name { text-transform: uppercase; font-size: 0.65rem; margin-bottom: 2px; }
         .cal-day .day-num { font-size: 1.2rem; font-weight: bold; }
+        .payment-pin { font-size: 0.8rem; margin-top: 2px; line-height: 1; }
 
         .movements-list { background: var(--card-bg); border-radius: 15px; padding: 15px; box-shadow: 0 4px 10px var(--shadow); max-height: 250px; overflow-y: auto; }
         .movement-item { display: flex; justify-content: space-between; padding: 10px 0; border-bottom: 1px solid var(--shadow); font-size: 0.9rem; }
@@ -206,7 +206,7 @@
             <div class="pane-right">
                 <h3 style="color: var(--secondary); font-size: 1.1rem; border-bottom: 1px solid var(--shadow); padding-bottom: 5px; margin-bottom: 10px;">Historial de esta meta</h3>
                 
-                <!-- Mini Calendario -->
+                <!-- Mini Calendario con el pin 📌 integrado -->
                 <div class="mini-calendar-container" id="miniCalendar">
                     <!-- Javascript insertará los días aquí -->
                 </div>
@@ -366,14 +366,12 @@
             return { count };
         }
         
-        // Algoritmo para encontrar el nombre exacto de la próxima fecha de pago
         function getNextPaymentDateStr(createdAt, paidCount) {
             let searchDate = new Date(createdAt);
             searchDate.setHours(0,0,0,0);
-            searchDate.setDate(searchDate.getDate() + 1); // Empieza a buscar desde el día siguiente a la creación
+            searchDate.setDate(searchDate.getDate() + 1); 
             
             let found = 0;
-            // Avanza en el calendario hasta encontrar la quincena correspondiente a tu número de pago
             while(found < paidCount + 1) {
                 let d = searchDate.getDate();
                 if (d === 1 || d === 15) {
@@ -411,7 +409,7 @@
                     ...data,
                     savedAmount: data.savedAmount !== undefined ? data.savedAmount : ((data.paidCount || 0) * data.amountPerPayment),
                     targetAmount: data.targetAmount !== undefined ? data.targetAmount : data.amount,
-                    paidCount: data.paidCount || 0 // Usado para calcular la fecha exacta
+                    paidCount: data.paidCount || 0
                 };
                 
                 const percentage = Math.min((goal.savedAmount / goal.targetAmount) * 100, 100);
@@ -516,7 +514,6 @@
         const openModal = (id) => document.getElementById(id).style.display = 'flex';
         const closeModal = (id) => document.getElementById(id).style.display = 'none';
 
-        // Cerrar ventana si se hace clic fuera del contenido
         window.addEventListener('click', (e) => {
             if (e.target.classList.contains('modal')) {
                 if (e.target.id !== 'customDialogModal') closeModal(e.target.id);
@@ -526,7 +523,7 @@
         document.getElementById('btnAdd').onclick = () => openModal('addModal');
         document.getElementById('btnConfig').onclick = () => { refreshBackupDropdown(); openModal('configModal'); };
 
-        // Renderizado del Mini-Calendario
+        // Renderizado del Mini-Calendario con 📌
         function renderMiniCalendar() {
             const container = document.getElementById('miniCalendar');
             if(!container) return;
@@ -543,10 +540,17 @@
                 let dayNum = d.getDate();
                 let isToday = i === 0;
                 
+                // Lógica de detección de pago y aplicación de estilo invisible o visible para no alterar el tamaño
+                let isPaymentDay = (dayNum === 1 || dayNum === 15);
+                let pinHtml = isPaymentDay 
+                    ? '<span class="payment-pin" title="Día de pago">📌</span>' 
+                    : '<span class="payment-pin" style="visibility: hidden;">📌</span>';
+                
                 container.innerHTML += `
                     <div class="cal-day ${isToday ? 'today' : ''}">
                         <span class="day-name">${dayName}</span>
                         <span class="day-num">${dayNum}</span>
+                        ${pinHtml}
                     </div>
                 `;
             }
@@ -615,7 +619,7 @@
                 color: document.getElementById('cardColor').value, 
                 totalPayments: pData.count,
                 amountPerPayment: amountPerPayment, 
-                paidCount: 0, // Inicia el contador de pagos de la app
+                paidCount: 0,
                 createdAt: new Date().toISOString()
             };
 
@@ -654,7 +658,6 @@
                 btn.innerText = "💰 Registrar Pago"; btn.disabled = false; btn.style.backgroundColor = "var(--primary)";
             }
             
-            // Cargar el Mini-Calendario visual
             renderMiniCalendar();
 
             if (unsubscribeHistory) unsubscribeHistory();
@@ -704,7 +707,7 @@
             }
             
             const newSavedAmount = currentGoal.savedAmount + depositAmount;
-            const newPaidCount = (currentGoal.paidCount || 0) + 1; // Suma 1 al contador para mover la fecha inteligentemente
+            const newPaidCount = (currentGoal.paidCount || 0) + 1; 
             
             await db.collection("goals").doc(currentGoal.id).update({ savedAmount: newSavedAmount, paidCount: newPaidCount });
             await logMovement(`Abono: ${currentGoal.name}`, depositAmount, 'in', `Check-in a: ${currentGoal.name}`, currentGoal.id);
@@ -729,7 +732,7 @@
             openModal('editModal');
         };
 
-        // Guardar Edición (Recálculo Automático)
+        // Guardar Edición
         document.getElementById('editForm').onsubmit = async (e) => {
             e.preventDefault();
             const btn = e.target.querySelector('button[type="submit"]');
