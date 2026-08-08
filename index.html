@@ -39,7 +39,7 @@
         }
 
         * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Segoe UI', Tahoma, sans-serif; }
-        body { background-color: var(--bg-color); color: var(--text-main); padding: 20px; padding-bottom: 90px; transition: background 0.3s; }
+        body { background-color: var(--bg-color); color: var(--text-main); padding: 20px; padding-bottom: 100px; transition: background 0.3s; }
         .container { width: 100%; max-width: 500px; margin: 0 auto; }
 
         .header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; }
@@ -59,19 +59,37 @@
         .color-picker-container { display: flex; align-items: center; gap: 10px; margin-bottom: 15px; }
         input[type="color"] { width: 50px; height: 50px; padding: 0; border: none; border-radius: 50%; cursor: pointer; }
 
+        /* === TABS DE NAVEGACIÓN === */
+        .tabs { display: flex; gap: 10px; margin-bottom: 20px; }
+        .tab-btn { flex: 1; padding: 12px; border-radius: 12px; border: 2px solid var(--shadow); background: var(--card-bg); color: var(--text-main); font-weight: bold; font-size: 1rem; transition: 0.3s; }
+        .tab-btn.active { background: var(--primary); color: white; border-color: var(--primary); box-shadow: 0 4px 10px rgba(217, 4, 41, 0.3); }
+
         .goal-list { display: flex; flex-direction: column; gap: 15px; margin-bottom: 30px; }
-        .goal-item { background: var(--card-bg); border-left: 6px solid var(--card-color, var(--primary)); padding: 15px; border-radius: 12px; box-shadow: 0 4px 10px var(--shadow); cursor: pointer; transition: transform 0.2s; }
+        
+        /* ESTILOS DE TARJETA (INCLUYE ATRASADO) */
+        .goal-item { background: var(--card-bg); border-left: 6px solid var(--card-color, var(--primary)); padding: 15px; border-radius: 12px; box-shadow: 0 4px 10px var(--shadow); cursor: pointer; transition: transform 0.2s; position: relative; }
         .goal-item:active { transform: scale(0.98); }
+        .goal-item.overdue { border: 2px solid #ff4d4d; border-left: 8px solid #ff4d4d; background-color: rgba(255, 77, 77, 0.05); }
+        .overdue-badge { position: absolute; top: -10px; right: 10px; background: #ff4d4d; color: white; font-size: 0.75rem; font-weight: bold; padding: 3px 8px; border-radius: 10px; box-shadow: 0 2px 5px rgba(0,0,0,0.2); animation: pulseRed 2s infinite; }
+
+        @keyframes pulseRed { 0% { transform: scale(1); } 50% { transform: scale(1.05); } 100% { transform: scale(1); } }
+
         .goal-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 5px; }
         .goal-title { font-size: 1.1rem; font-weight: bold; }
-        .goal-amount { color: var(--text-main); font-weight: bold; }
+        .goal-amount { color: var(--text-main); font-weight: bold; font-size: 1.3rem; }
         
         .next-payment { font-size: 2rem; font-weight: bold; margin: 8px 0; display: flex; align-items: baseline; gap: 8px; flex-wrap: wrap;}
         .next-payment-label { font-size: 0.95rem; color: var(--text-muted); font-weight: bold; background: var(--bg-color); padding: 4px 10px; border-radius: 20px; }
         
-        .progress-wrapper { background-color: var(--shadow); border-radius: 10px; height: 8px; width: 100%; overflow: hidden; margin-top: 10px; }
-        .progress-fill { background-color: var(--card-color, var(--primary)); height: 100%; width: 0%; transition: width 0.5s ease; }
+        /* BARRAS DE PROGRESO PIXELADAS (Estilo Sandbox/Retro) */
+        .progress-wrapper { background-color: var(--shadow); border-radius: 0; border: 1px solid var(--text-main); height: 8px; width: 100%; overflow: hidden; margin-top: 10px; box-shadow: inset 0 2px 0 rgba(0,0,0,0.1); }
+        .progress-fill { background-color: var(--card-color, var(--primary)); height: 100%; width: 0%; transition: width 0.5s ease; background-image: linear-gradient(90deg, rgba(255,255,255,0.25) 50%, transparent 50%); background-size: 6px 100%; border-right: 1px solid var(--text-main); }
         .progress-text { font-size: 0.8rem; color: var(--text-muted); margin-top: 5px; text-align: right; font-weight: bold;}
+
+        /* SECCIÓN PATSSY 💖 */
+        .patssy-theme { background: linear-gradient(135deg, #fff0f5 0%, #ffe4e1 100%); border: 2px dashed #ffb6c1; border-radius: 20px; padding: 20px 15px; margin-top: 30px; position: relative; box-shadow: 0 4px 15px rgba(255, 105, 180, 0.15); }
+        .patssy-theme h2 { color: #d81b60; font-family: 'Georgia', serif; font-style: italic; border-bottom: 1px solid rgba(255, 182, 193, 0.5); text-align: center; margin-bottom: 20px; }
+        .patssy-theme::before { content: '💖✨'; position: absolute; top: -18px; right: 15px; font-size: 2rem; }
 
         /* === MINI CALENDARIO === */
         .mini-calendar-container { display: flex; gap: 8px; overflow-x: auto; padding: 5px 0 15px 0; scrollbar-width: none; }
@@ -82,33 +100,14 @@
         .cal-day .day-num { font-size: 1.2rem; font-weight: normal; transition: color 0.3s; }
         .payment-pin { font-size: 0.8rem; margin-top: 2px; line-height: 1; }
 
-        /* Estilo para el día de HOY */
         .cal-day.today { background: var(--primary); color: white; border-color: var(--primary); transform: translateY(-2px); box-shadow: 0 4px 10px var(--shadow); }
         .cal-day.today .day-num { font-weight: bold; color: white; }
         .cal-day.today .day-name { color: white; }
 
-        /* Estilo NUEVO para los Días de PAGO (1 y 15) */
-        .cal-day.payment-day {
-            border: 2px solid var(--primary);
-            background-color: rgba(217, 4, 41, 0.12); /* Rojo muy ligero */
-        }
-        .cal-day.payment-day .day-name,
-        .cal-day.payment-day .day-num {
-            color: #ffffff; /* Letras blancas */
-            font-weight: 900; /* Extra negritas */
-            /* Sombra inteligente para que el blanco resalte perfecto en fondos claros */
-            text-shadow: 0 0 5px var(--primary), 0 1px 3px rgba(0,0,0,0.5); 
-        }
-
-        /* Prevención: Si el día de hoy TAMBIÉN es día de pago */
-        .cal-day.today.payment-day {
-            background-color: var(--primary);
-        }
-        .cal-day.today.payment-day .day-name,
-        .cal-day.today.payment-day .day-num {
-            text-shadow: none; /* Quitamos la sombra porque el fondo ya es sólido oscuro */
-        }
-        /* ======================== */
+        .cal-day.payment-day { border: 2px solid var(--primary); background-color: rgba(217, 4, 41, 0.12); }
+        .cal-day.payment-day .day-name, .cal-day.payment-day .day-num { color: #ffffff; font-weight: 900; text-shadow: 0 0 5px var(--primary), 0 1px 3px rgba(0,0,0,0.5); }
+        .cal-day.today.payment-day { background-color: var(--primary); }
+        .cal-day.today.payment-day .day-name, .cal-day.today.payment-day .day-num { text-shadow: none; }
 
         .movements-list { background: var(--card-bg); border-radius: 15px; padding: 15px; box-shadow: 0 4px 10px var(--shadow); max-height: 250px; overflow-y: auto; }
         .movement-item { display: flex; justify-content: space-between; padding: 10px 0; border-bottom: 1px solid var(--shadow); font-size: 0.9rem; }
@@ -137,8 +136,12 @@
         
         .dialog-buttons { display: flex; gap: 10px; margin-top: 20px; }
         .action-row { display: flex; gap: 15px; margin-top: 15px; justify-content: center; }
-        
         .action-btn.icon-only { width: 55px; height: 55px; border-radius: 15px; font-size: 1.5rem; display: flex; align-items: center; justify-content: center; padding: 0; flex: none; }
+        
+        /* Ocultar Vistas */
+        .view-section { display: none; animation: fadeIn 0.3s; }
+        .view-section.active { display: block; }
+
     </style>
 </head>
 <body>
@@ -148,44 +151,87 @@
             <h1>My AntBank</h1>
             <button class="btn-icon" id="btnConfig" title="Configuración">⚙️</button>
         </div>
+
+        <!-- TABS -->
+        <div class="tabs">
+            <button class="tab-btn active" id="tabAlcancia" onclick="switchTab('alcancia')">🏦 Alcancía</button>
+            <button class="tab-btn" id="tabWishlist" onclick="switchTab('wishlist')">🎁 Wishlist</button>
+        </div>
         
-        <h2>Mis Suscripciones</h2>
-        <div class="goal-list" id="goalList">
-            <p style="text-align:center; color: var(--text-muted); font-size:0.9rem;" id="loadingText">Cargando...</p>
+        <!-- VISTA ALCANCÍA -->
+        <div id="viewAlcancia" class="view-section active">
+            <h2>En Progreso</h2>
+            <div class="goal-list" id="goalList">
+                <p style="text-align:center; color: var(--text-muted); font-size:0.9rem;" id="loadingText">Cargando...</p>
+            </div>
+
+            <div id="completedContainer" style="display: none;">
+                <h2>Completadas 🎉</h2>
+                <div class="goal-list" id="completedList"></div>
+            </div>
+
+            <h2>Últimos Movimientos Globales</h2>
+            <div class="movements-list" id="movementsList">
+                <p style="text-align:center; color: var(--text-muted); font-size:0.9rem;">Cargando movimientos...</p>
+            </div>
         </div>
 
-        <h2>Últimos Movimientos Globales</h2>
-        <div class="movements-list" id="movementsList">
-            <p style="text-align:center; color: var(--text-muted); font-size:0.9rem;">Cargando movimientos...</p>
+        <!-- VISTA WISHLIST -->
+        <div id="viewWishlist" class="view-section">
+            <h2>Mis Deseos (Yo)</h2>
+            <div class="goal-list" id="wishlistYo">
+                <p style="text-align:center; color: var(--text-muted); font-size:0.9rem;">No hay items aún...</p>
+            </div>
+
+            <div class="patssy-theme">
+                <h2>Wishlist de Patssy</h2>
+                <div class="goal-list" id="wishlistPatssy">
+                    <p style="text-align:center; color: var(--text-muted); font-size:0.9rem;">No hay items aún...</p>
+                </div>
+            </div>
         </div>
     </div>
 
-    <!-- Botón Flotante para Agregar -->
+    <!-- Botón Flotante Principal -->
     <button class="fab" id="btnAdd">+</button>
 
-    <!-- Modal Agregar Suscripción -->
+    <!-- Modal Elegir Qué Agregar -->
+    <div class="modal" id="addChoiceModal">
+        <div class="modal-content" style="text-align: center;">
+            <h2 style="border:none; color:var(--primary); margin-bottom: 20px;">¿Qué deseas agregar?</h2>
+            <button class="action-btn" style="background-color: var(--primary); margin-bottom:15px;" onclick="openAddForm('subscription')">🏦 Nueva Suscripción</button>
+            <button class="action-btn" style="background-color: var(--secondary); margin-bottom:15px;" onclick="openAddForm('wishlist_yo')">🎁 Wishlist (Mía)</button>
+            <button class="action-btn" style="background-color: #ff69b4; margin-bottom:0;" onclick="openAddForm('wishlist_patssy')">💖 Wishlist (Patssy)</button>
+        </div>
+    </div>
+
+    <!-- Modal Agregar Suscripción / Wishlist -->
     <div class="modal" id="addModal">
         <div class="modal-content">
-            <h2 style="border:none; color:var(--primary); text-align:center;">Nueva Suscripción</h2>
+            <h2 id="addModalTitle" style="border:none; color:var(--primary); text-align:center;">Nueva...</h2>
             <form id="goalForm">
-                <label>Nombre de la meta/suscripción</label>
-                <input type="text" id="name" placeholder="Ej. Xbox Game Pass" required>
+                <input type="hidden" id="addType">
+                
+                <label>Nombre del artículo/suscripción</label>
+                <input type="text" id="name" placeholder="Ej. Xbox / Lentes" required>
                 
                 <label>Costo Total ($)</label>
                 <input type="number" id="targetAmount" placeholder="3500" required min="1">
                 
-                <label>Dinero ya pagado/ahorrado (opcional)</label>
-                <input type="number" id="prePaidMoney" placeholder="Ej. 3200" value="0" min="0">
-                
-                <label>Fecha Límite</label>
-                <input type="date" id="deadline" required>
+                <div id="subFields">
+                    <label>Dinero ya pagado/ahorrado (opcional)</label>
+                    <input type="number" id="prePaidMoney" placeholder="Ej. 3200" value="0" min="0">
+                    
+                    <label>Fecha Límite</label>
+                    <input type="date" id="deadline">
+                </div>
 
                 <div class="color-picker-container">
                     <label>Color de la Tarjeta:</label>
                     <input type="color" id="cardColor" value="#d90429">
                 </div>
 
-                <button type="submit" class="main-btn">Guardar Suscripción</button>
+                <button type="submit" class="main-btn" style="margin-bottom:0;">Guardar</button>
             </form>
         </div>
     </div>
@@ -193,23 +239,25 @@
     <!-- Modal Editar Suscripción -->
     <div class="modal" id="editModal">
         <div class="modal-content">
-            <h2 style="border:none; color:var(--primary); text-align:center;">Editar Suscripción</h2>
+            <h2 style="border:none; color:var(--primary); text-align:center;">Editar</h2>
             <form id="editForm">
-                <label>Nombre de la meta/suscripción</label>
+                <label>Nombre</label>
                 <input type="text" id="editName" required>
                 
                 <label>Nuevo Costo Total ($)</label>
                 <input type="number" id="editTargetAmount" required min="1">
                 
-                <label>Nueva Fecha Límite</label>
-                <input type="date" id="editDeadline" required>
+                <div id="editSubFields">
+                    <label>Nueva Fecha Límite</label>
+                    <input type="date" id="editDeadline">
+                </div>
 
                 <div class="color-picker-container">
                     <label>Color de la Tarjeta:</label>
                     <input type="color" id="editCardColor">
                 </div>
 
-                <button type="submit" class="main-btn">Guardar Cambios</button>
+                <button type="submit" class="main-btn" style="margin-bottom:0;">Guardar Cambios</button>
             </form>
         </div>
     </div>
@@ -223,13 +271,14 @@
                 
                 <button class="main-btn" id="btnMakeCheckin">💰 Registrar Pago</button>
                 
+                <!-- Botones Minimalistas sin texto, sin botón Cerrar -->
                 <div class="action-row">
                     <button class="action-btn icon-only" id="btnEditGoal" style="background-color: var(--secondary);" title="Editar">✏️</button>
                     <button class="action-btn icon-only" id="btnDeleteGoal" style="background-color: #ff4d4d;" title="Borrar">🗑️</button>
                 </div>
             </div>
             
-            <div class="pane-right">
+            <div class="pane-right" id="ciRightPane">
                 <h3 style="color: var(--secondary); font-size: 1.1rem; border-bottom: 1px solid var(--shadow); padding-bottom: 5px; margin-bottom: 10px;">Historial de esta meta</h3>
                 
                 <div class="mini-calendar-container" id="miniCalendar">
@@ -298,7 +347,6 @@
             messagingSenderId: "384731632952",
             appId: "1:384731632952:web:9b4facff98bc7f6ebf5dcd"
         };
-        
         firebase.initializeApp(firebaseConfig);
         const db = firebase.firestore();
 
@@ -308,7 +356,6 @@
             if (!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
             if (audioCtx.state === 'suspended') audioCtx.resume();
         }
-
         function playSuccessSound() {
             try {
                 initAudio();
@@ -320,7 +367,6 @@
                 osc.start(); osc.stop(audioCtx.currentTime + 0.3);
             } catch(e) {}
         }
-
         function playCoinSound() {
             try {
                 initAudio();
@@ -334,27 +380,43 @@
             } catch(e) {}
         }
 
-        // === 3. SISTEMA DE TEMAS ===
+        // === 3. SISTEMA DE TEMAS Y TABS ===
         const themeSelect = document.getElementById('themeSelect');
         const savedTheme = localStorage.getItem('appTheme') || 'banco';
         document.documentElement.setAttribute('data-theme', savedTheme);
         themeSelect.value = savedTheme;
-
         themeSelect.addEventListener('change', (e) => {
             document.documentElement.setAttribute('data-theme', e.target.value);
             localStorage.setItem('appTheme', e.target.value);
         });
+
+        function switchTab(tab) {
+            document.getElementById('viewAlcancia').classList.remove('active');
+            document.getElementById('viewWishlist').classList.remove('active');
+            document.getElementById('tabAlcancia').classList.remove('active');
+            document.getElementById('tabWishlist').classList.remove('active');
+            
+            if(tab === 'alcancia') {
+                document.getElementById('viewAlcancia').classList.add('active');
+                document.getElementById('tabAlcancia').classList.add('active');
+            } else {
+                document.getElementById('viewWishlist').classList.add('active');
+                document.getElementById('tabWishlist').classList.add('active');
+            }
+        }
 
         // === 4. HISTORIAL DE RESPALDOS ===
         async function triggerAutoBackup(actionDescription) {
             try {
                 const goalsSnap = await db.collection("goals").get();
                 const movesSnap = await db.collection("movements").get();
+                const wishlistSnap = await db.collection("wishlists").get();
                 
                 const backup = {
                     id: Date.now(), action: actionDescription, date: new Date().toISOString(),
                     goals: goalsSnap.docs.map(d => ({id: d.id, ...d.data()})),
-                    movements: movesSnap.docs.map(d => ({id: d.id, ...d.data()}))
+                    movements: movesSnap.docs.map(d => ({id: d.id, ...d.data()})),
+                    wishlists: wishlistSnap.docs.map(d => ({id: d.id, ...d.data()}))
                 };
 
                 let history = JSON.parse(localStorage.getItem('ahorros_backups_list') || '[]');
@@ -391,7 +453,7 @@
             return { count };
         }
         
-        function getNextPaymentDateStr(createdAt, paidCount) {
+        function getNextPaymentDateObj(createdAt, paidCount) {
             let searchDate = new Date(createdAt);
             searchDate.setHours(0,0,0,0);
             searchDate.setDate(searchDate.getDate() + 1); 
@@ -399,16 +461,10 @@
             let found = 0;
             while(found < paidCount + 1) {
                 let d = searchDate.getDate();
-                if (d === 1 || d === 15) {
-                    found++;
-                }
-                if (found < paidCount + 1) {
-                    searchDate.setDate(searchDate.getDate() + 1);
-                }
+                if (d === 1 || d === 15) found++;
+                if (found < paidCount + 1) searchDate.setDate(searchDate.getDate() + 1);
             }
-            
-            const months = ['Ene', 'Feb', 'Mar', 'Abr', 'May', 'Jun', 'Jul', 'Ago', 'Sep', 'Oct', 'Nov', 'Dic'];
-            return `${months[searchDate.getMonth()]} ${searchDate.getDate()}`;
+            return searchDate;
         }
 
         async function logMovement(title, amount, type, actionDescForBackup, goalId = null) {
@@ -421,16 +477,24 @@
         // === 6. FIREBASE REALTIME Y RENDERIZADO ===
         const mxn = new Intl.NumberFormat('es-MX', { style: 'currency', currency: 'MXN', maximumFractionDigits: 0 });
         let currentGoal = null;
+        let isWishlistItem = false;
         let unsubscribeHistory = null;
 
+        // Escuchar Metas / Suscripciones
         db.collection("goals").orderBy("createdAt", "desc").onSnapshot(snapshot => {
             const loading = document.getElementById('loadingText');
             if (loading) loading.remove();
 
-            snapshot.docChanges().forEach(change => {
-                const data = change.doc.data();
+            // Limpiamos visualmente antes de aplicar cambios para procesar listas separadas
+            document.getElementById('goalList').innerHTML = '';
+            document.getElementById('completedList').innerHTML = '';
+            let hasCompleted = false;
+
+            const docs = [];
+            snapshot.forEach(doc => docs.push({ id: doc.id, ...doc.data() }));
+
+            docs.forEach(data => {
                 const goal = { 
-                    id: change.doc.id, 
                     ...data,
                     savedAmount: data.savedAmount !== undefined ? data.savedAmount : ((data.paidCount || 0) * data.amountPerPayment),
                     targetAmount: data.targetAmount !== undefined ? data.targetAmount : data.amount,
@@ -438,78 +502,92 @@
                 };
                 
                 const percentage = Math.min((goal.savedAmount / goal.targetAmount) * 100, 100);
-                const list = document.getElementById('goalList');
-
                 const remainingToSave = goal.targetAmount - goal.savedAmount;
                 let nextPayment = goal.amountPerPayment;
                 if (nextPayment > remainingToSave) nextPayment = remainingToSave;
                 
-                let nextPaymentDate = getNextPaymentDateStr(goal.createdAt, goal.paidCount);
+                const nextDateObj = getNextPaymentDateObj(goal.createdAt, goal.paidCount);
+                const months = ['Ene', 'Feb', 'Mar', 'Abr', 'May', 'Jun', 'Jul', 'Ago', 'Sep', 'Oct', 'Nov', 'Dic'];
+                const nextPaymentDateStr = `${months[nextDateObj.getMonth()]} ${nextDateObj.getDate()}`;
+                
+                // LÓGICA DE ATRASADO
+                let todayZero = new Date(); todayZero.setHours(0,0,0,0);
+                const isOverdue = nextDateObj < todayZero && remainingToSave > 0;
                 
                 let paymentDisplay = remainingToSave <= 0 
                     ? `¡Completado! 🎉`
-                    : `${mxn.format(nextPayment)} <span class="next-payment-label">Sig. pago: ${nextPaymentDate}</span>`;
+                    : `${mxn.format(nextPayment)} <span class="next-payment-label">Sig. pago: ${nextPaymentDateStr}</span>`;
                 let paymentColor = remainingToSave <= 0 ? 'var(--tertiary)' : 'var(--text-main)';
 
-                if (change.type === "added") {
-                    const el = document.createElement('div');
-                    el.className = 'goal-item'; el.id = `goal-${goal.id}`;
-                    el.style.setProperty('--card-color', goal.color);
+                const el = document.createElement('div');
+                el.className = `goal-item ${isOverdue ? 'overdue' : ''}`;
+                el.id = `goal-${goal.id}`;
+                el.style.setProperty('--card-color', goal.color);
+                
+                let overdueBadge = isOverdue ? '<span class="overdue-badge">¡Atrasado!</span>' : '';
+                
+                el.innerHTML = `
+                    ${overdueBadge}
+                    <div class="goal-header">
+                        <span class="goal-title">${goal.name}</span>
+                        <span class="goal-amount">${mxn.format(goal.targetAmount)}</span>
+                    </div>
                     
-                    el.innerHTML = `
-                        <div class="goal-header">
-                            <span class="goal-title">${goal.name}</span>
-                            <span class="goal-amount" style="font-size: 0.9rem; color: var(--text-muted);">Meta: ${mxn.format(goal.targetAmount)}</span>
-                        </div>
-                        
-                        <div class="next-payment" id="nextPayment-${goal.id}" style="color: ${paymentColor}">
-                            ${paymentDisplay}
-                        </div>
-                        
-                        <div class="progress-wrapper">
-                            <div class="progress-fill" style="width: 0%"></div>
-                        </div>
-                        <div class="progress-text">Ahorrado: ${mxn.format(goal.savedAmount)} / ${mxn.format(goal.targetAmount)}</div>
-                    `;
+                    <div class="next-payment" style="color: ${paymentColor}">
+                        ${paymentDisplay}
+                    </div>
                     
-                    if (list.children.length === 0 || change.newIndex >= list.children.length) list.appendChild(el);
-                    else list.insertBefore(el, list.children[change.newIndex]);
-                    
-                    el.onclick = () => openCheckin(goal);
-                    setTimeout(() => { 
-                        const fill = el.querySelector('.progress-fill');
-                        if (fill) fill.style.width = `${percentage}%`; 
-                    }, 50);
+                    <div class="progress-wrapper">
+                        <div class="progress-fill" style="width: ${percentage}%"></div>
+                    </div>
+                    <div class="progress-text">Ahorrado: ${mxn.format(goal.savedAmount)} / ${mxn.format(goal.targetAmount)}</div>
+                `;
+                
+                el.onclick = () => openCheckin(goal, false);
 
-                } else if (change.type === "modified") {
-                    const el = document.getElementById(`goal-${goal.id}`);
-                    if (el) {
-                        el.onclick = () => openCheckin(goal);
-                        
-                        const fill = el.querySelector('.progress-fill');
-                        const text = el.querySelector('.progress-text');
-                        const nextPaymentEl = document.getElementById(`nextPayment-${goal.id}`);
-                        
-                        el.style.setProperty('--card-color', goal.color);
-                        
-                        const titleEl = el.querySelector('.goal-title');
-                        const targetEl = el.querySelector('.goal-amount');
-                        if (titleEl) titleEl.innerText = goal.name;
-                        if (targetEl) targetEl.innerText = `Meta: ${mxn.format(goal.targetAmount)}`;
-
-                        if (fill) fill.style.width = `${percentage}%`;
-                        if (text) text.innerText = `Ahorrado: ${mxn.format(goal.savedAmount)} / ${mxn.format(goal.targetAmount)}`;
-                        
-                        if (nextPaymentEl) {
-                            nextPaymentEl.innerHTML = paymentDisplay;
-                            nextPaymentEl.style.color = paymentColor;
-                        }
-                    }
-                } else if (change.type === "removed") {
-                    const el = document.getElementById(`goal-${goal.id}`);
-                    if (el) el.remove();
+                if (remainingToSave <= 0) {
+                    document.getElementById('completedList').appendChild(el);
+                    hasCompleted = true;
+                } else {
+                    document.getElementById('goalList').appendChild(el);
                 }
             });
+
+            document.getElementById('completedContainer').style.display = hasCompleted ? 'block' : 'none';
+        });
+
+        // Escuchar Wishlist
+        db.collection("wishlists").orderBy("createdAt", "desc").onSnapshot(snapshot => {
+            document.getElementById('wishlistYo').innerHTML = '';
+            document.getElementById('wishlistPatssy').innerHTML = '';
+            let yoCount = 0; let patssyCount = 0;
+
+            snapshot.forEach(doc => {
+                const item = { id: doc.id, ...doc.data() };
+                const el = document.createElement('div');
+                el.className = 'goal-item';
+                el.style.setProperty('--card-color', item.color);
+                
+                el.innerHTML = `
+                    <div class="goal-header" style="margin-bottom:0;">
+                        <span class="goal-title">${item.name}</span>
+                        <span class="goal-amount">${mxn.format(item.targetAmount)}</span>
+                    </div>
+                `;
+                
+                el.onclick = () => openCheckin(item, true); // true indica que es wishlist
+
+                if(item.owner === 'yo') {
+                    document.getElementById('wishlistYo').appendChild(el);
+                    yoCount++;
+                } else {
+                    document.getElementById('wishlistPatssy').appendChild(el);
+                    patssyCount++;
+                }
+            });
+
+            if(yoCount === 0) document.getElementById('wishlistYo').innerHTML = '<p style="text-align:center; color: var(--text-muted); font-size:0.9rem;">No hay items aún...</p>';
+            if(patssyCount === 0) document.getElementById('wishlistPatssy').innerHTML = '<p style="text-align:center; color: var(--text-muted); font-size:0.9rem;">No hay items aún...</p>';
         });
 
         // Escuchar Movimientos Globales
@@ -545,8 +623,27 @@
             }
         });
 
-        document.getElementById('btnAdd').onclick = () => openModal('addModal');
+        // Botón FAB - Abrir Menú
+        document.getElementById('btnAdd').onclick = () => openModal('addChoiceModal');
         document.getElementById('btnConfig').onclick = () => { refreshBackupDropdown(); openModal('configModal'); };
+
+        // Abrir Formulario específico
+        function openAddForm(type) {
+            closeModal('addChoiceModal');
+            document.getElementById('goalForm').reset();
+            document.getElementById('addType').value = type;
+            
+            if(type === 'subscription') {
+                document.getElementById('addModalTitle').innerText = "Nueva Suscripción";
+                document.getElementById('subFields').style.display = 'block';
+                document.getElementById('deadline').required = true;
+            } else {
+                document.getElementById('addModalTitle').innerText = type === 'wishlist_yo' ? "Nuevo Deseo (Mío)" : "Nuevo Deseo (Patssy)";
+                document.getElementById('subFields').style.display = 'none';
+                document.getElementById('deadline').required = false;
+            }
+            openModal('addModal');
+        }
 
         // Renderizado del Mini-Calendario con estilos de Día de Pago
         function renderMiniCalendar() {
@@ -565,10 +662,8 @@
                 let dayNum = d.getDate();
                 let isToday = i === 0;
                 
-                // Detección de pago (días 1 y 15)
                 let isPaymentDay = (dayNum === 1 || dayNum === 15);
                 let paymentClass = isPaymentDay ? 'payment-day' : '';
-                
                 let pinHtml = isPaymentDay 
                     ? '<span class="payment-pin" title="Día de pago">📌</span>' 
                     : '<span class="payment-pin" style="visibility: hidden;">📌</span>';
@@ -616,88 +711,92 @@
             openModal('customDialogModal');
         }
 
-        // Guardar Nueva Suscripción
+        // Guardar Nuevo (Suscripción o Wishlist)
         document.getElementById('goalForm').onsubmit = async (e) => {
             e.preventDefault();
             const btn = e.target.querySelector('button[type="submit"]');
             btn.innerText = "Guardando..."; btn.disabled = true;
 
+            const type = document.getElementById('addType').value;
+            const name = document.getElementById('name').value;
             const targetAmount = parseFloat(document.getElementById('targetAmount').value);
-            let prePaidMoney = parseFloat(document.getElementById('prePaidMoney').value) || 0;
-            const deadline = document.getElementById('deadline').value;
+            const color = document.getElementById('cardColor').value;
 
-            if (prePaidMoney > targetAmount) prePaidMoney = targetAmount;
+            if (type === 'subscription') {
+                let prePaidMoney = parseFloat(document.getElementById('prePaidMoney').value) || 0;
+                if (prePaidMoney > targetAmount) prePaidMoney = targetAmount;
+                const deadline = document.getElementById('deadline').value;
+                const remainingAmount = targetAmount - prePaidMoney;
+                const pData = calculatePayments(targetAmount, deadline);
+                
+                let amountPerPayment = targetAmount; 
+                if (pData.count > 0 && remainingAmount > 0) amountPerPayment = Math.ceil(remainingAmount / pData.count);
+                else if (remainingAmount <= 0) amountPerPayment = 0; 
 
-            const remainingAmount = targetAmount - prePaidMoney;
-            const pData = calculatePayments(targetAmount, deadline);
-            
-            let amountPerPayment = targetAmount; 
-            if (pData.count > 0 && remainingAmount > 0) {
-                amountPerPayment = Math.ceil(remainingAmount / pData.count);
-            } else if (remainingAmount <= 0) {
-                amountPerPayment = 0; 
-            }
+                const newGoal = {
+                    name, targetAmount, savedAmount: prePaidMoney, deadline, color, 
+                    totalPayments: pData.count, amountPerPayment, paidCount: 0, createdAt: new Date().toISOString()
+                };
 
-            const newGoal = {
-                name: document.getElementById('name').value, 
-                targetAmount: targetAmount, 
-                savedAmount: prePaidMoney, 
-                deadline: deadline,
-                color: document.getElementById('cardColor').value, 
-                totalPayments: pData.count,
-                amountPerPayment: amountPerPayment, 
-                paidCount: 0,
-                createdAt: new Date().toISOString()
-            };
+                const docRef = await db.collection("goals").add(newGoal);
+                if (prePaidMoney > 0) await logMovement(`Dinero Previo: ${name}`, prePaidMoney, 'in', `Se creó: ${name}`, docRef.id);
+                else await triggerAutoBackup(`Se creó Suscripción: ${name}`);
 
-            const docRef = await db.collection("goals").add(newGoal);
-            
-            if (prePaidMoney > 0) {
-                await logMovement(`Dinero Previo: ${newGoal.name}`, prePaidMoney, 'in', `Se creó: ${newGoal.name}`, docRef.id);
             } else {
-                await triggerAutoBackup(`Se creó: ${newGoal.name}`);
+                // Modo Wishlist
+                const owner = type === 'wishlist_yo' ? 'yo' : 'patssy';
+                const newItem = { name, targetAmount, color, owner, createdAt: new Date().toISOString() };
+                await db.collection("wishlists").add(newItem);
+                await triggerAutoBackup(`Se agregó Wishlist: ${name}`);
             }
             
             playSuccessSound();
             confetti({ particleCount: 100, spread: 70, origin: { y: 0.6 }, colors: ['#e07a5f', '#81b29a', '#f2cc8f'] });
             
             closeModal('addModal');
-            document.getElementById('goalForm').reset();
-            btn.innerText = "Guardar Suscripción"; btn.disabled = false;
+            btn.innerText = "Guardar"; btn.disabled = false;
         };
 
-        // Abrir Checkin 
-        function openCheckin(goal) {
-            currentGoal = goal;
-            document.getElementById('ciTitle').innerText = goal.name;
+        // Abrir Checkin (Maneja Subscriptions y Wishlist)
+        function openCheckin(item, isWishlist) {
+            currentGoal = item;
+            isWishlistItem = isWishlist;
+            document.getElementById('ciTitle').innerText = item.name;
             
-            const btn = document.getElementById('btnMakeCheckin');
-            const remainingToSave = goal.targetAmount - goal.savedAmount;
+            const btnCheckin = document.getElementById('btnMakeCheckin');
+            const rightPane = document.getElementById('ciRightPane');
             
-            let nextPayment = goal.amountPerPayment;
-            if (nextPayment > remainingToSave) nextPayment = remainingToSave;
-            
-            if(goal.savedAmount >= goal.targetAmount) {
-                document.getElementById('ciAmount').innerText = "Completado";
-                btn.innerText = "¡Meta Alcanzada!"; btn.disabled = true; btn.style.backgroundColor = "var(--tertiary)";
+            if (isWishlist) {
+                // Modo Wishlist: Ocultar checkin y panel derecho
+                document.getElementById('ciAmount').innerText = mxn.format(item.targetAmount);
+                btnCheckin.style.display = 'none';
+                rightPane.style.display = 'none';
             } else {
-                document.getElementById('ciAmount').innerText = mxn.format(nextPayment);
-                btn.innerText = "💰 Registrar Pago"; btn.disabled = false; btn.style.backgroundColor = "var(--primary)";
-            }
-            
-            renderMiniCalendar();
+                // Modo Suscripción
+                btnCheckin.style.display = 'block';
+                rightPane.style.display = 'block';
+                const remainingToSave = item.targetAmount - item.savedAmount;
+                let nextPayment = item.amountPerPayment;
+                if (nextPayment > remainingToSave) nextPayment = remainingToSave;
+                
+                if(item.savedAmount >= item.targetAmount) {
+                    document.getElementById('ciAmount').innerText = "Completado";
+                    btnCheckin.disabled = true; btnCheckin.style.backgroundColor = "var(--tertiary)";
+                } else {
+                    document.getElementById('ciAmount').innerText = mxn.format(nextPayment);
+                    btnCheckin.disabled = false; btnCheckin.style.backgroundColor = "var(--primary)";
+                }
+                
+                renderMiniCalendar();
 
-            if (unsubscribeHistory) unsubscribeHistory();
-            unsubscribeHistory = db.collection("movements")
-                .where("goalId", "==", goal.id)
-                .onSnapshot(snap => {
+                if (unsubscribeHistory) unsubscribeHistory();
+                unsubscribeHistory = db.collection("movements").where("goalId", "==", item.id).onSnapshot(snap => {
                     const list = document.getElementById('ciHistoryList');
                     list.innerHTML = '';
                     if(snap.empty) {
                         list.innerHTML = '<p style="text-align:center; color:var(--text-muted); font-size:0.9rem;">Sin movimientos aún</p>';
                         return;
                     }
-                    
                     const moves = [];
                     snap.forEach(doc => moves.push(doc.data()));
                     moves.sort((a, b) => new Date(b.date) - new Date(a.date));
@@ -707,31 +806,22 @@
                         const dateStr = `${d.toLocaleDateString()} ${d.toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})}`;
                         const isPos = m.type === 'in'; const sign = isPos ? '+' : '-';
                         const css = isPos ? 'mov-positive' : 'mov-negative';
-                        
-                        list.innerHTML += `
-                            <div class="history-mini-item">
-                                <span>${m.title} <br><small style="color:var(--text-muted)">${dateStr}</small></span>
-                                <span class="${css}">${sign}${mxn.format(m.amount)}</span>
-                            </div>
-                        `;
+                        list.innerHTML += `<div class="history-mini-item"><span>${m.title} <br><small style="color:var(--text-muted)">${dateStr}</small></span><span class="${css}">${sign}${mxn.format(m.amount)}</span></div>`;
                     });
                 });
+            }
 
             openModal('checkinModal');
         }
 
-        // Hacer Checkin
+        // Hacer Checkin (Suscripciones)
         document.getElementById('btnMakeCheckin').onclick = async () => {
-            if(!currentGoal) return;
-            
+            if(!currentGoal || isWishlistItem) return;
             document.getElementById('btnMakeCheckin').innerText = "Guardando...";
             
             const remainingToSave = currentGoal.targetAmount - currentGoal.savedAmount;
             let depositAmount = currentGoal.amountPerPayment;
-            
-            if (depositAmount > remainingToSave) {
-                depositAmount = remainingToSave;
-            }
+            if (depositAmount > remainingToSave) depositAmount = remainingToSave;
             
             const newSavedAmount = currentGoal.savedAmount + depositAmount;
             const newPaidCount = (currentGoal.paidCount || 0) + 1; 
@@ -754,8 +844,16 @@
             closeModal('checkinModal');
             document.getElementById('editName').value = currentGoal.name;
             document.getElementById('editTargetAmount').value = currentGoal.targetAmount;
-            document.getElementById('editDeadline').value = currentGoal.deadline;
             document.getElementById('editCardColor').value = currentGoal.color;
+            
+            if(isWishlistItem) {
+                document.getElementById('editSubFields').style.display = 'none';
+                document.getElementById('editDeadline').required = false;
+            } else {
+                document.getElementById('editSubFields').style.display = 'block';
+                document.getElementById('editDeadline').required = true;
+                document.getElementById('editDeadline').value = currentGoal.deadline;
+            }
             openModal('editModal');
         };
 
@@ -766,43 +864,40 @@
             btn.innerText = "Guardando..."; btn.disabled = true;
 
             const targetAmount = parseFloat(document.getElementById('editTargetAmount').value);
-            const deadline = document.getElementById('editDeadline').value;
             const name = document.getElementById('editName').value;
             const color = document.getElementById('editCardColor').value;
 
-            const pData = calculatePayments(targetAmount, deadline);
-            const remainingAmount = targetAmount - currentGoal.savedAmount;
-            
-            let amountPerPayment = targetAmount;
-            if (pData.count > 0 && remainingAmount > 0) {
-                amountPerPayment = Math.ceil(remainingAmount / pData.count);
-            } else if (remainingAmount <= 0) {
-                amountPerPayment = 0; 
+            if(isWishlistItem) {
+                await db.collection("wishlists").doc(currentGoal.id).update({ name, targetAmount, color });
+                await triggerAutoBackup(`Se editó wishlist: ${name}`);
+            } else {
+                const deadline = document.getElementById('editDeadline').value;
+                const pData = calculatePayments(targetAmount, deadline);
+                const remainingAmount = targetAmount - currentGoal.savedAmount;
+                
+                let amountPerPayment = targetAmount;
+                if (pData.count > 0 && remainingAmount > 0) amountPerPayment = Math.ceil(remainingAmount / pData.count);
+                else if (remainingAmount <= 0) amountPerPayment = 0; 
+
+                const updatedGoal = { name, targetAmount, deadline, color, totalPayments: pData.count, amountPerPayment };
+                await db.collection("goals").doc(currentGoal.id).update(updatedGoal);
+                await triggerAutoBackup(`Se editó suscripción: ${name}`);
             }
-
-            const updatedGoal = {
-                name: name,
-                targetAmount: targetAmount,
-                deadline: deadline,
-                color: color,
-                totalPayments: pData.count,
-                amountPerPayment: amountPerPayment
-            };
-
-            await db.collection("goals").doc(currentGoal.id).update(updatedGoal);
-            await triggerAutoBackup(`Se editó suscripción: ${name}`);
 
             closeModal('editModal');
             btn.innerText = "Guardar Cambios"; btn.disabled = false;
         };
 
-        // Borrar Suscripción
+        // Borrar Suscripción / Wishlist
         document.getElementById('btnDeleteGoal').onclick = () => {
-            showDialog("Eliminar Suscripción", `¿Estás seguro de que deseas eliminar "${currentGoal.name}"? Perderás su historial.`, "danger", async () => {
-                const goalName = currentGoal.name;
-                const goalId = currentGoal.id;
-                await db.collection("goals").doc(goalId).delete();
-                await logMovement(`Eliminada: ${goalName}`, 0, 'out', `Se borró: ${goalName}`, goalId);
+            const col = isWishlistItem ? "wishlists" : "goals";
+            const msg = isWishlistItem ? `eliminar el deseo "${currentGoal.name}"?` : `eliminar "${currentGoal.name}"? Perderás su historial.`;
+            
+            showDialog("Eliminar", `¿Estás seguro de que deseas ${msg}`, "danger", async () => {
+                const name = currentGoal.name; const id = currentGoal.id;
+                await db.collection(col).doc(id).delete();
+                if(!isWishlistItem) await logMovement(`Eliminada: ${name}`, 0, 'out', `Se borró: ${name}`, id);
+                else await triggerAutoBackup(`Se borró wishlist: ${name}`);
                 closeModal('checkinModal');
             });
         };
@@ -819,20 +914,18 @@
 
                 try {
                     const batch = db.batch();
-                    const currentGoals = await db.collection("goals").get();
-                    currentGoals.forEach(doc => batch.delete(doc.ref));
-                    const currentMoves = await db.collection("movements").get();
-                    currentMoves.forEach(doc => batch.delete(doc.ref));
-
-                    backup.goals.forEach(g => {
-                        const ref = db.collection("goals").doc(g.id);
-                        const data = {...g}; delete data.id; batch.set(ref, data);
-                    });
+                    const collections = ["goals", "movements", "wishlists"];
                     
-                    backup.movements.forEach(m => {
-                        const ref = db.collection("movements").doc(m.id);
-                        const data = {...m}; delete data.id; batch.set(ref, data);
-                    });
+                    for (const col of collections) {
+                        const snapshot = await db.collection(col).get();
+                        snapshot.forEach(doc => batch.delete(doc.ref));
+                        if(backup[col]) {
+                            backup[col].forEach(item => {
+                                const ref = db.collection(col).doc(item.id);
+                                const data = {...item}; delete data.id; batch.set(ref, data);
+                            });
+                        }
+                    }
 
                     await batch.commit();
                     closeModal('configModal');
@@ -847,16 +940,17 @@
 
         // BOTÓN: EMPEZAR DE CERO
         document.getElementById('btnWipeDB').onclick = () => {
-            showDialog("Zona de Peligro", "🚨 ¿ESTÁS COMPLETAMENTE SEGURO?\n\nEsto borrará todas tus suscripciones, el historial y los movimientos de la nube.", "danger", () => {
+            showDialog("Zona de Peligro", "🚨 ¿ESTÁS COMPLETAMENTE SEGURO?\n\nEsto borrará todas tus suscripciones, wishlists, el historial y los movimientos.", "danger", () => {
                 setTimeout(() => {
                     showDialog("Última Advertencia", "No hay vuelta atrás. ¿Continuar y formatear la base de datos?", "danger", async () => {
                         document.getElementById('btnWipeDB').innerText = "Borrando Base de Datos...";
                         try {
                             const batch = db.batch();
-                            const currentGoals = await db.collection("goals").get();
-                            currentGoals.forEach(doc => batch.delete(doc.ref));
-                            const currentMoves = await db.collection("movements").get();
-                            currentMoves.forEach(doc => batch.delete(doc.ref));
+                            const collections = ["goals", "movements", "wishlists"];
+                            for (const col of collections) {
+                                const snapshot = await db.collection(col).get();
+                                snapshot.forEach(doc => batch.delete(doc.ref));
+                            }
 
                             await batch.commit();
                             localStorage.removeItem('ahorros_backups_list'); 
