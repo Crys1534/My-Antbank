@@ -59,7 +59,7 @@
         .color-picker-container { display: flex; align-items: center; gap: 10px; margin-bottom: 15px; }
         input[type="color"] { width: 50px; height: 50px; padding: 0; border: none; border-radius: 50%; cursor: pointer; }
 
-        /* === TABS DE NAVEGACIÓN (Actualizados para 4 opciones) === */
+        /* === TABS DE NAVEGACIÓN === */
         .tabs { display: flex; gap: 8px; margin-bottom: 20px; flex-wrap: wrap; }
         .tab-btn { flex: 1 1 45%; padding: 10px; border-radius: 12px; border: 2px solid var(--shadow); background: var(--card-bg); color: var(--text-main); font-weight: bold; font-size: 0.95rem; transition: 0.3s; }
         .tab-btn.active { background: var(--primary); color: white; border-color: var(--primary); box-shadow: 0 4px 10px rgba(217, 4, 41, 0.3); }
@@ -89,24 +89,6 @@
         .patssy-theme h2 { color: #d81b60; font-family: 'Georgia', serif; font-style: italic; border-bottom: 1px solid rgba(255, 182, 193, 0.5); text-align: center; margin-bottom: 20px; }
         .patssy-theme::before { content: '💖✨'; position: absolute; top: -18px; right: 15px; font-size: 2rem; }
 
-        /* === MINI CALENDARIO === */
-        .mini-calendar-container { display: flex; gap: 8px; overflow-x: auto; padding: 5px 0 15px 0; scrollbar-width: none; }
-        .mini-calendar-container::-webkit-scrollbar { display: none; }
-        .cal-day { min-width: 52px; flex-shrink: 0; display: flex; flex-direction: column; align-items: center; background: var(--bg-color); border-radius: 12px; padding: 8px 5px 5px 5px; color: var(--text-muted); border: 1px solid var(--shadow); transition: all 0.3s; }
-        
-        .cal-day .day-name { text-transform: uppercase; font-size: 0.65rem; margin-bottom: 2px; transition: color 0.3s; }
-        .cal-day .day-num { font-size: 1.2rem; font-weight: normal; transition: color 0.3s; }
-        .payment-pin { font-size: 0.8rem; margin-top: 2px; line-height: 1; }
-
-        .cal-day.today { background: var(--primary); color: white; border-color: var(--primary); transform: translateY(-2px); box-shadow: 0 4px 10px var(--shadow); }
-        .cal-day.today .day-num { font-weight: bold; color: white; }
-        .cal-day.today .day-name { color: white; }
-
-        .cal-day.payment-day { border: 2px solid var(--primary); background-color: rgba(217, 4, 41, 0.12); }
-        .cal-day.payment-day .day-name, .cal-day.payment-day .day-num { color: #ffffff; font-weight: 900; text-shadow: 0 0 5px var(--primary), 0 1px 3px rgba(0,0,0,0.5); }
-        .cal-day.today.payment-day { background-color: var(--primary); }
-        .cal-day.today.payment-day .day-name, .cal-day.today.payment-day .day-num { text-shadow: none; }
-
         .movements-list { background: var(--card-bg); border-radius: 15px; padding: 15px; box-shadow: 0 4px 10px var(--shadow); overflow-y: auto; }
         .movement-item { display: flex; justify-content: space-between; padding: 10px 0; border-bottom: 1px solid var(--shadow); font-size: 0.9rem; }
         .movement-item:last-child { border-bottom: none; }
@@ -128,7 +110,16 @@
         }
 
         .history-list { max-height: 150px; overflow-y: auto; padding-right: 5px; }
-        .history-mini-item { display: flex; justify-content: space-between; font-size: 0.85rem; padding: 8px 0; border-bottom: 1px solid var(--shadow); }
+        .history-mini-item { display: flex; justify-content: space-between; font-size: 0.85rem; padding: 8px 0; border-bottom: 1px solid var(--shadow); align-items: center;}
+
+        /* DISEÑO CEBRA PARA PRÓXIMOS PAGOS */
+        #ciScheduleList { margin-top: 10px; }
+        #ciScheduleList .history-mini-item { padding: 12px 10px; border-bottom: none; border-radius: 8px; margin-bottom: 4px; }
+        #ciScheduleList .history-mini-item:nth-child(odd) { background-color: rgba(0, 0, 0, 0.02); } /* Gris casi blanco */
+        #ciScheduleList .history-mini-item:nth-child(even) { background-color: rgba(0, 0, 0, 0.06); } /* Gris claro */
+        
+        [data-theme="oscuro"] #ciScheduleList .history-mini-item:nth-child(odd) { background-color: rgba(255, 255, 255, 0.02); }
+        [data-theme="oscuro"] #ciScheduleList .history-mini-item:nth-child(even) { background-color: rgba(255, 255, 255, 0.06); }
 
         @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
         
@@ -136,7 +127,6 @@
         .action-row { display: flex; gap: 15px; margin-top: 15px; justify-content: center; }
         .action-btn.icon-only { width: 55px; height: 55px; border-radius: 15px; font-size: 1.5rem; display: flex; align-items: center; justify-content: center; padding: 0; flex: none; }
         
-        /* Ocultar Vistas */
         .view-section { display: none; animation: fadeIn 0.3s; }
         .view-section.active { display: block; }
 
@@ -150,7 +140,6 @@
             <button class="btn-icon" id="btnConfig" title="Configuración">⚙️</button>
         </div>
 
-        <!-- TABS (Ahora con 4 opciones) -->
         <div class="tabs">
             <button class="tab-btn active" id="tabAlcancia" onclick="switchTab('alcancia')">🏦 Alcancía</button>
             <button class="tab-btn" id="tabWishlist" onclick="switchTab('wishlist')">🎁 Wishlist</button>
@@ -158,14 +147,12 @@
             <button class="tab-btn" id="tabMovimientos" onclick="switchTab('movimientos')">📜 Historial</button>
         </div>
         
-        <!-- VISTA: ALCANCÍA -->
         <div id="viewAlcancia" class="view-section active">
             <h2>En Progreso</h2>
             <div class="goal-list" id="goalList">
                 <p style="text-align:center; color: var(--text-muted); font-size:0.9rem;" id="loadingText">Cargando...</p>
             </div>
 
-            <!-- Movimiento reciente (Solo muestra 1) -->
             <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px; margin-top: 30px;">
                 <h2 style="margin: 0; border: none;">Último Movimiento</h2>
             </div>
@@ -175,7 +162,6 @@
             <button class="action-btn" style="background: transparent; color: var(--primary); border: 2px solid var(--primary); width: 100%;" onclick="switchTab('movimientos')">Ver todos los movimientos</button>
         </div>
 
-        <!-- VISTA: WISHLIST -->
         <div id="viewWishlist" class="view-section">
             <h2>Mis Deseos (Yo)</h2>
             <div class="goal-list" id="wishlistYo">
@@ -190,7 +176,6 @@
             </div>
         </div>
 
-        <!-- VISTA: ARCHIVADOS (COMPLETADAS) -->
         <div id="viewArchivados" class="view-section">
             <h2>Metas Completadas 🎉</h2>
             <p style="color: var(--text-muted); font-size: 0.9rem; margin-bottom: 20px;">Aquí descansan tus logros financieros.</p>
@@ -199,7 +184,6 @@
             </div>
         </div>
 
-        <!-- VISTA: HISTORIAL COMPLETO -->
         <div id="viewMovimientos" class="view-section">
             <h2>Historial Global</h2>
             <p style="color: var(--text-muted); font-size: 0.9rem; margin-bottom: 20px;">Registro de todos tus abonos y creaciones.</p>
@@ -209,10 +193,8 @@
         </div>
     </div>
 
-    <!-- Botón Flotante Principal -->
     <button class="fab" id="btnAdd">+</button>
 
-    <!-- Modal Elegir Qué Agregar -->
     <div class="modal" id="addChoiceModal">
         <div class="modal-content" style="text-align: center;">
             <h2 style="border:none; color:var(--primary); margin-bottom: 20px;">¿Qué deseas agregar?</h2>
@@ -222,7 +204,6 @@
         </div>
     </div>
 
-    <!-- Modal Agregar Suscripción / Wishlist -->
     <div class="modal" id="addModal">
         <div class="modal-content">
             <h2 id="addModalTitle" style="border:none; color:var(--primary); text-align:center;">Nueva...</h2>
@@ -253,7 +234,6 @@
         </div>
     </div>
 
-    <!-- Modal Editar Suscripción -->
     <div class="modal" id="editModal">
         <div class="modal-content">
             <h2 style="border:none; color:var(--primary); text-align:center;">Editar</h2>
@@ -279,7 +259,6 @@
         </div>
     </div>
 
-    <!-- Modal Check-in con Panel Doble -->
     <div class="modal" id="checkinModal">
         <div class="modal-content dual-pane">
             <div class="pane-left" style="text-align: center;">
@@ -288,7 +267,6 @@
                 
                 <button class="main-btn" id="btnMakeCheckin">💰 Registrar Pago</button>
                 
-                <!-- Botones Minimalistas -->
                 <div class="action-row">
                     <button class="action-btn icon-only" id="btnEditGoal" style="background-color: var(--secondary);" title="Editar">✏️</button>
                     <button class="action-btn icon-only" id="btnDeleteGoal" style="background-color: #ff4d4d;" title="Borrar">🗑️</button>
@@ -296,20 +274,21 @@
             </div>
             
             <div class="pane-right" id="ciRightPane">
-                <h3 style="color: var(--secondary); font-size: 1.1rem; border-bottom: 1px solid var(--shadow); padding-bottom: 5px; margin-bottom: 10px;">Historial de esta meta</h3>
-                
-                <div class="mini-calendar-container" id="miniCalendar">
-                    <!-- Javascript insertará los días aquí -->
+                <!-- CONTROLES TIPO TOGGLE PARA PLAN VS HISTORIAL -->
+                <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom: 10px;">
+                    <h3 id="paneRightTitle" style="color: var(--secondary); font-size: 1.1rem; border-bottom: 1px solid var(--shadow); padding-bottom: 5px; margin:0; flex:1;">Próximos Pagos</h3>
+                    <button class="action-btn" id="btnToggleHistory" style="padding: 4px 8px; margin:0 0 0 10px; width: auto; font-size: 0.75rem; background: var(--secondary); border-radius: 8px;">Ver Abonos</button>
                 </div>
 
-                <div id="ciHistoryList" class="history-list">
-                    <p style="text-align:center; color: var(--text-muted); font-size:0.9rem;">Cargando...</p>
-                </div>
+                <!-- Lista de Fechas Proyectadas con diseño Zebra -->
+                <div id="ciScheduleList" class="history-list"></div>
+
+                <!-- Historial Real (Oculto inicialmente) -->
+                <div id="ciHistoryList" class="history-list" style="display:none;"></div>
             </div>
         </div>
     </div>
 
-    <!-- Modal Configuración -->
     <div class="modal" id="configModal">
         <div class="modal-content">
             <h2 style="border:none;">Configuración</h2>
@@ -341,7 +320,6 @@
         </div>
     </div>
 
-    <!-- Modal Nativo de Diálogos -->
     <div class="modal" id="customDialogModal" style="z-index: 2000;">
         <div class="modal-content" style="text-align: center; max-width: 350px;">
             <h2 id="dialogTitle" style="border:none; color: var(--text-main);">Atención</h2>
@@ -367,7 +345,7 @@
         firebase.initializeApp(firebaseConfig);
         const db = firebase.firestore();
 
-        // === 2. GAMIFICACIÓN (SONIDOS) ===
+        // === 2. GAMIFICACIÓN ===
         let audioCtx; 
         function initAudio() {
             if (!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
@@ -410,39 +388,25 @@
         function switchTab(tab) {
             const views = ['viewAlcancia', 'viewWishlist', 'viewArchivados', 'viewMovimientos'];
             const tabs = ['tabAlcancia', 'tabWishlist', 'tabArchivados', 'tabMovimientos'];
-            
             views.forEach(v => document.getElementById(v).classList.remove('active'));
             tabs.forEach(t => document.getElementById(t).classList.remove('active'));
             
-            if(tab === 'alcancia') {
-                document.getElementById('viewAlcancia').classList.add('active');
-                document.getElementById('tabAlcancia').classList.add('active');
-            } else if(tab === 'wishlist') {
-                document.getElementById('viewWishlist').classList.add('active');
-                document.getElementById('tabWishlist').classList.add('active');
-            } else if(tab === 'archivados') {
-                document.getElementById('viewArchivados').classList.add('active');
-                document.getElementById('tabArchivados').classList.add('active');
-            } else if(tab === 'movimientos') {
-                document.getElementById('viewMovimientos').classList.add('active');
-                document.getElementById('tabMovimientos').classList.add('active');
-            }
+            document.getElementById('view' + tab.charAt(0).toUpperCase() + tab.slice(1)).classList.add('active');
+            document.getElementById('tab' + tab.charAt(0).toUpperCase() + tab.slice(1)).classList.add('active');
         }
 
-        // === 4. HISTORIAL DE RESPALDOS ===
+        // === 4. RESPALDOS ===
         async function triggerAutoBackup(actionDescription) {
             try {
                 const goalsSnap = await db.collection("goals").get();
                 const movesSnap = await db.collection("movements").get();
                 const wishlistSnap = await db.collection("wishlists").get();
-                
                 const backup = {
                     id: Date.now(), action: actionDescription, date: new Date().toISOString(),
                     goals: goalsSnap.docs.map(d => ({id: d.id, ...d.data()})),
                     movements: movesSnap.docs.map(d => ({id: d.id, ...d.data()})),
                     wishlists: wishlistSnap.docs.map(d => ({id: d.id, ...d.data()}))
                 };
-
                 let history = JSON.parse(localStorage.getItem('ahorros_backups_list') || '[]');
                 history.unshift(backup);
                 if (history.length > 15) history.pop();
@@ -463,41 +427,39 @@
             });
         }
 
-        // === 5. CÁLCULOS, MOVIMIENTOS Y FECHAS (NUEVO ALGORITMO CATORCENAL) ===
-        // FECHA ANCLA UNIVERSAL: 25 de septiembre de 2026. A partir de aquí todo es cada 14 días.
+        // === 5. CÁLCULO CATORCENAL DINÁMICO ===
         const anchorPayday = new Date(2026, 8, 25); 
         anchorPayday.setHours(0,0,0,0);
 
         function isPayday(dateObj) {
             const d = new Date(dateObj);
             d.setHours(0,0,0,0);
-            // Calculamos la diferencia exacta en días respecto al ancla
             const diffDays = Math.round((d - anchorPayday) / (1000 * 60 * 60 * 24));
             return diffDays % 14 === 0;
         }
 
-        function calculatePayments(totalAmount, deadlineDate, startDate = new Date()) {
-            const start = new Date(startDate); start.setHours(0,0,0,0);
-            const end = new Date(deadlineDate); end.setDate(end.getDate() + 1); end.setHours(0,0,0,0);
-            if (end <= start) return { count: 0 };
-            
-            let count = 0; let current = new Date(start); current.setDate(current.getDate() + 1);
-            while (current <= end) {
-                if (isPayday(current)) count++;
+        function getFuturePaydays(deadlineDate) {
+            let current = new Date();
+            current.setHours(0,0,0,0);
+            let end = new Date(deadlineDate);
+            end.setDate(end.getDate() + 1); 
+            end.setHours(0,0,0,0);
+
+            let dates = [];
+            while(current <= end) {
+                if(isPayday(current)) dates.push(new Date(current));
                 current.setDate(current.getDate() + 1);
             }
-            return { count };
+            return dates;
         }
-        
-        function getNextPaymentDates(createdAt, paidCount, limit = 2) {
+
+        function getNextPaymentDatesOriginal(createdAt, paidCount, limit = 1) {
             let current = new Date(createdAt);
             current.setHours(0,0,0,0);
             current.setDate(current.getDate() + 1); 
             
             let found = 0;
             let dates = [];
-            
-            // Avanzamos día por día buscando los viernes catorcenales
             while(found < paidCount + limit) {
                 if (isPayday(current)) {
                     found++;
@@ -515,13 +477,14 @@
             await triggerAutoBackup(actionDescForBackup); 
         }
 
-        // === 6. FIREBASE REALTIME Y RENDERIZADO ===
+        // === 6. FIREBASE REALTIME ===
         const mxn = new Intl.NumberFormat('es-MX', { style: 'currency', currency: 'MXN', maximumFractionDigits: 0 });
         let currentGoal = null;
         let isWishlistItem = false;
         let unsubscribeHistory = null;
+        const months = ['Ene', 'Feb', 'Mar', 'Abr', 'May', 'Jun', 'Jul', 'Ago', 'Sep', 'Oct', 'Nov', 'Dic'];
 
-        // Escuchar Metas / Suscripciones
+        // Escuchar Metas
         db.collection("goals").orderBy("createdAt", "desc").onSnapshot(snapshot => {
             const loading = document.getElementById('loadingText');
             if (loading) loading.remove();
@@ -536,7 +499,7 @@
             docs.forEach(data => {
                 const goal = { 
                     ...data,
-                    savedAmount: data.savedAmount !== undefined ? data.savedAmount : ((data.paidCount || 0) * data.amountPerPayment),
+                    savedAmount: data.savedAmount !== undefined ? data.savedAmount : 0,
                     targetAmount: data.targetAmount !== undefined ? data.targetAmount : data.amount,
                     paidCount: data.paidCount || 0
                 };
@@ -544,26 +507,48 @@
                 const percentage = Math.min((goal.savedAmount / goal.targetAmount) * 100, 100);
                 const remainingToSave = goal.targetAmount - goal.savedAmount;
                 
-                let nextPayment = goal.amountPerPayment;
-                if (nextPayment > remainingToSave) nextPayment = remainingToSave;
-                
-                // Cambiamos el límite de 2 a 1 para que solo busque la próxima fecha
-                const nextDates = getNextPaymentDates(goal.createdAt, goal.paidCount, 1);
-                let todayZero = new Date(); todayZero.setHours(0,0,0,0);
-                const isOverdue = nextDates.length > 0 && nextDates[0] < todayZero && remainingToSave > 0;
+                // CÁLCULO DINÁMICO INTELIGENTE
+                const futureDates = getFuturePaydays(goal.deadline);
+                let dynamicNextPayment = 0;
+                let futureSchedule = [];
 
-                const months = ['Ene', 'Feb', 'Mar', 'Abr', 'May', 'Jun', 'Jul', 'Ago', 'Sep', 'Oct', 'Nov', 'Dic'];
+                if (remainingToSave > 0) {
+                    if (futureDates.length > 0) {
+                        dynamicNextPayment = Math.ceil(remainingToSave / futureDates.length);
+                        let accumulated = 0;
+                        
+                        futureDates.forEach((d, idx) => {
+                            let amt = dynamicNextPayment;
+                            if (idx === futureDates.length - 1) amt = remainingToSave - accumulated;
+                            accumulated += amt;
+                            futureSchedule.push({ date: d, amount: amt });
+                        });
+                    } else {
+                        dynamicNextPayment = remainingToSave;
+                        futureSchedule.push({ date: new Date(), amount: remainingToSave, overdue: true });
+                    }
+                }
+
+                goal.dynamicNextPayment = dynamicNextPayment;
+                goal.futureSchedule = futureSchedule;
+
+                const expectedNextDates = getNextPaymentDatesOriginal(goal.createdAt, goal.paidCount, 1);
+                let todayZero = new Date(); todayZero.setHours(0,0,0,0);
+                const isOverdue = expectedNextDates.length > 0 && expectedNextDates[0] < todayZero && remainingToSave > 0;
+
                 let nextPaymentDateStr = "";
-                
-                // Mostramos siempre solo un pago
-                if (nextDates.length > 0) {
-                    nextPaymentDateStr = `Sig. pago: ${months[nextDates[0].getMonth()]} ${nextDates[0].getDate()}`;
+                if (isOverdue) {
+                    nextPaymentDateStr = `Atrasado: ${months[expectedNextDates[0].getMonth()]} ${expectedNextDates[0].getDate()}`;
+                } else if (futureDates.length > 0) {
+                    nextPaymentDateStr = `Sig. pago: ${months[futureDates[0].getMonth()]} ${futureDates[0].getDate()}`;
+                } else {
+                    nextPaymentDateStr = "Fecha límite alcanzada";
                 }
                 
                 let paymentDisplay = remainingToSave <= 0 
                     ? `¡Completado! 🎉`
-                    : `${mxn.format(nextPayment)} <span class="next-payment-label">${nextPaymentDateStr}</span>`;
-                let paymentColor = remainingToSave <= 0 ? 'var(--tertiary)' : 'var(--text-main)';
+                    : `${mxn.format(dynamicNextPayment)} <span class="next-payment-label">${nextPaymentDateStr}</span>`;
+                let paymentColor = remainingToSave <= 0 ? 'var(--tertiary)' : (isOverdue ? '#ff4d4d' : 'var(--text-main)');
 
                 const el = document.createElement('div');
                 el.className = `goal-item ${isOverdue ? 'overdue' : ''}`;
@@ -584,7 +569,7 @@
                     </div>
                     
                     <div class="progress-wrapper">
-                        <div class="progress-fill" style="width: 0%"></div>
+                        <div class="progress-fill" style="width: ${percentage}%"></div>
                     </div>
                     <div class="progress-text">Ahorrado: ${mxn.format(goal.savedAmount)} / ${mxn.format(goal.targetAmount)}</div>
                 `;
@@ -636,24 +621,15 @@
             if(patssyCount === 0) document.getElementById('wishlistPatssy').innerHTML = '<p style="text-align:center; color: var(--text-muted); font-size:0.9rem;">No hay items aún...</p>';
         });
 
-        // ==========================================
-        // SISTEMA DIVIDIDO DE MOVIMIENTOS
-        // ==========================================
-        
-        // 1. Mostrar solo el MÁS RECIENTE en la pestaña de Alcancía
+        // Movimientos Divididos
         db.collection("movements").orderBy("date", "desc").limit(1).onSnapshot(snapshot => {
             const list = document.getElementById('recentMovementList');
             list.innerHTML = '';
-            if(snapshot.empty) {
-                list.innerHTML = '<p style="text-align:center; color:var(--text-muted); font-size:0.9rem;">Sin movimientos aún</p>';
-                return;
-            }
-            
+            if(snapshot.empty) return list.innerHTML = '<p style="text-align:center; color:var(--text-muted); font-size:0.9rem;">Sin movimientos aún</p>';
             snapshot.forEach(doc => {
                 const mov = doc.data(); const d = new Date(mov.date);
                 const isPos = mov.type === 'in'; const sign = isPos ? '+' : '-';
                 const cssClass = isPos ? 'mov-positive' : 'mov-negative';
-                
                 list.innerHTML = `
                     <div class="movement-item" style="border:none; padding:0;">
                         <div>
@@ -666,20 +642,14 @@
             });
         });
 
-        // 2. Mostrar TODOS en la pestaña de Historial
         db.collection("movements").orderBy("date", "desc").limit(50).onSnapshot(snapshot => {
             const list = document.getElementById('fullMovementsList');
             list.innerHTML = '';
-            if(snapshot.empty) {
-                list.innerHTML = '<p style="text-align:center; color:var(--text-muted); font-size:0.9rem;">No hay movimientos aún</p>';
-                return;
-            }
-            
+            if(snapshot.empty) return list.innerHTML = '<p style="text-align:center; color:var(--text-muted); font-size:0.9rem;">No hay movimientos aún</p>';
             snapshot.forEach(doc => {
                 const mov = doc.data(); const d = new Date(mov.date);
                 const isPos = mov.type === 'in'; const sign = isPos ? '+' : '-';
                 const cssClass = isPos ? 'mov-positive' : 'mov-negative';
-                
                 list.innerHTML += `
                     <div class="movement-item">
                         <div>
@@ -692,7 +662,7 @@
             });
         });
 
-        // === 7. MANEJO DE MODALES Y COMPONENTES UI ===
+        // === 7. MANEJO DE MODALES ===
         const openModal = (id) => document.getElementById(id).style.display = 'flex';
         const closeModal = (id) => document.getElementById(id).style.display = 'none';
 
@@ -722,45 +692,26 @@
             openModal('addModal');
         }
 
-        // Renderizado del Mini-Calendario adaptado a catorcenas
-        function renderMiniCalendar() {
-            const container = document.getElementById('miniCalendar');
-            if(!container) return;
-            container.innerHTML = '';
-            
-            const today = new Date();
-            const days = ['Dom', 'Lun', 'Mar', 'Mié', 'Jue', 'Vie', 'Sáb'];
-            
-            for(let i = 0; i < 8; i++) {
-                let d = new Date(today);
-                d.setDate(d.getDate() + i);
-                
-                let dayName = days[d.getDay()];
-                let dayNum = d.getDate();
-                let isToday = i === 0;
-                
-                // Usar el algoritmo catorcenal para detectar si es día de pago
-                let isPaymentDay = isPayday(d);
-                let paymentClass = isPaymentDay ? 'payment-day' : '';
-                let pinHtml = isPaymentDay 
-                    ? '<span class="payment-pin" title="Día de pago">📌</span>' 
-                    : '<span class="payment-pin" style="visibility: hidden;">📌</span>';
-                
-                container.innerHTML += `
-                    <div class="cal-day ${isToday ? 'today' : ''} ${paymentClass}">
-                        <span class="day-name">${dayName}</span>
-                        <span class="day-num">${dayNum}</span>
-                        ${pinHtml}
-                    </div>
-                `;
+        // Manejo Toggle de Checkin
+        let showingHistory = false;
+        document.getElementById('btnToggleHistory').onclick = () => {
+            showingHistory = !showingHistory;
+            if (showingHistory) {
+                document.getElementById('ciScheduleList').style.display = 'none';
+                document.getElementById('ciHistoryList').style.display = 'block';
+                document.getElementById('btnToggleHistory').innerText = 'Ver Plan';
+                document.getElementById('paneRightTitle').innerText = 'Historial de Abonos';
+            } else {
+                document.getElementById('ciScheduleList').style.display = 'block';
+                document.getElementById('ciHistoryList').style.display = 'none';
+                document.getElementById('btnToggleHistory').innerText = 'Ver Abonos';
+                document.getElementById('paneRightTitle').innerText = 'Próximos Pagos';
             }
-        }
+        };
 
-        // SISTEMA DE DIÁLOGOS NATIVOS
         function showDialog(title, message, type, onConfirmCallback = null) {
             document.getElementById('dialogTitle').innerText = title;
             document.getElementById('dialogMessage').innerText = message;
-            
             const btnCancel = document.getElementById('btnCancelDialog');
             const btnAccept = document.getElementById('btnAcceptDialog');
             
@@ -804,16 +755,9 @@
                 let prePaidMoney = parseFloat(document.getElementById('prePaidMoney').value) || 0;
                 if (prePaidMoney > targetAmount) prePaidMoney = targetAmount;
                 const deadline = document.getElementById('deadline').value;
-                const remainingAmount = targetAmount - prePaidMoney;
-                const pData = calculatePayments(targetAmount, deadline);
-                
-                let amountPerPayment = targetAmount; 
-                if (pData.count > 0 && remainingAmount > 0) amountPerPayment = Math.ceil(remainingAmount / pData.count);
-                else if (remainingAmount <= 0) amountPerPayment = 0; 
 
                 const newGoal = {
-                    name, targetAmount, savedAmount: prePaidMoney, deadline, color, 
-                    totalPayments: pData.count, amountPerPayment, paidCount: 0, createdAt: new Date().toISOString()
+                    name, targetAmount, savedAmount: prePaidMoney, deadline, color, paidCount: 0, createdAt: new Date().toISOString()
                 };
 
                 const docRef = await db.collection("goals").add(newGoal);
@@ -842,49 +786,68 @@
             
             const btnCheckin = document.getElementById('btnMakeCheckin');
             const rightPane = document.getElementById('ciRightPane');
+            const btnToggle = document.getElementById('btnToggleHistory');
+            
+            // Reiniciar estado visual del modal
+            showingHistory = false;
+            document.getElementById('ciScheduleList').style.display = 'block';
+            document.getElementById('ciHistoryList').style.display = 'none';
+            btnToggle.innerText = 'Ver Abonos';
+            document.getElementById('paneRightTitle').innerText = 'Próximos Pagos';
             
             if (isWishlist) {
                 document.getElementById('ciAmount').innerText = mxn.format(item.targetAmount);
                 btnCheckin.style.display = 'none';
-                rightPane.style.display = 'none';
+                btnToggle.style.display = 'none';
+                document.getElementById('ciScheduleList').style.display = 'none';
+                document.getElementById('ciHistoryList').style.display = 'block';
+                document.getElementById('paneRightTitle').innerText = 'Historial de Abonos';
             } else {
                 btnCheckin.style.display = 'block';
-                rightPane.style.display = 'block';
-                const remainingToSave = item.targetAmount - item.savedAmount;
-                let nextPayment = item.amountPerPayment;
-                if (nextPayment > remainingToSave) nextPayment = remainingToSave;
+                btnToggle.style.display = 'block';
                 
                 if(item.savedAmount >= item.targetAmount) {
                     document.getElementById('ciAmount').innerText = "Completado";
                     btnCheckin.disabled = true; btnCheckin.style.backgroundColor = "var(--tertiary)";
                 } else {
-                    document.getElementById('ciAmount').innerText = mxn.format(nextPayment);
+                    document.getElementById('ciAmount').innerText = mxn.format(item.dynamicNextPayment);
                     btnCheckin.disabled = false; btnCheckin.style.backgroundColor = "var(--primary)";
                 }
                 
-                renderMiniCalendar();
-
-                if (unsubscribeHistory) unsubscribeHistory();
-                unsubscribeHistory = db.collection("movements").where("goalId", "==", item.id).onSnapshot(snap => {
-                    const list = document.getElementById('ciHistoryList');
-                    list.innerHTML = '';
-                    if(snap.empty) {
-                        list.innerHTML = '<p style="text-align:center; color:var(--text-muted); font-size:0.9rem;">Sin movimientos aún</p>';
-                        return;
-                    }
-                    const moves = [];
-                    snap.forEach(doc => moves.push(doc.data()));
-                    moves.sort((a, b) => new Date(b.date) - new Date(a.date));
-                    
-                    moves.forEach(m => {
-                        const d = new Date(m.date);
-                        const dateStr = `${d.toLocaleDateString()} ${d.toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})}`;
-                        const isPos = m.type === 'in'; const sign = isPos ? '+' : '-';
-                        const css = isPos ? 'mov-positive' : 'mov-negative';
-                        list.innerHTML += `<div class="history-mini-item"><span>${m.title} <br><small style="color:var(--text-muted)">${dateStr}</small></span><span class="${css}">${sign}${mxn.format(m.amount)}</span></div>`;
+                // Pintar Lista de Plan de Pagos
+                let scheduleHtml = '';
+                if (item.futureSchedule && item.futureSchedule.length > 0) {
+                    item.futureSchedule.forEach(sItem => {
+                        const dStr = `${months[sItem.date.getMonth()]} ${sItem.date.getDate()}`;
+                        const overdueTag = sItem.overdue ? '<span style="color:#ff4d4d; font-size:0.7rem; font-weight:bold; margin-left:5px;">(Pago Inmediato)</span>' : '';
+                        scheduleHtml += `<div class="history-mini-item"><span>${dStr} ${overdueTag}</span><span style="color:var(--text-main); font-weight:bold;">${mxn.format(sItem.amount)}</span></div>`;
                     });
-                });
+                } else {
+                    scheduleHtml = '<p style="text-align:center; color:var(--text-muted); font-size:0.9rem;">Sin pagos proyectados.</p>';
+                }
+                document.getElementById('ciScheduleList').innerHTML = scheduleHtml;
             }
+
+            if (unsubscribeHistory) unsubscribeHistory();
+            unsubscribeHistory = db.collection("movements").where("goalId", "==", item.id).onSnapshot(snap => {
+                const list = document.getElementById('ciHistoryList');
+                list.innerHTML = '';
+                if(snap.empty) {
+                    list.innerHTML = '<p style="text-align:center; color:var(--text-muted); font-size:0.9rem;">Sin movimientos aún</p>';
+                    return;
+                }
+                const moves = [];
+                snap.forEach(doc => moves.push(doc.data()));
+                moves.sort((a, b) => new Date(b.date) - new Date(a.date));
+                
+                moves.forEach(m => {
+                    const d = new Date(m.date);
+                    const dateStr = `${d.toLocaleDateString()} ${d.toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})}`;
+                    const isPos = m.type === 'in'; const sign = isPos ? '+' : '-';
+                    const css = isPos ? 'mov-positive' : 'mov-negative';
+                    list.innerHTML += `<div class="history-mini-item"><span>${m.title} <br><small style="color:var(--text-muted)">${dateStr}</small></span><span class="${css}">${sign}${mxn.format(m.amount)}</span></div>`;
+                });
+            });
 
             openModal('checkinModal');
         }
@@ -895,7 +858,7 @@
             document.getElementById('btnMakeCheckin').innerText = "Guardando...";
             
             const remainingToSave = currentGoal.targetAmount - currentGoal.savedAmount;
-            let depositAmount = currentGoal.amountPerPayment;
+            let depositAmount = currentGoal.dynamicNextPayment;
             if (depositAmount > remainingToSave) depositAmount = remainingToSave;
             
             const newSavedAmount = currentGoal.savedAmount + depositAmount;
@@ -947,14 +910,7 @@
                 await triggerAutoBackup(`Se editó wishlist: ${name}`);
             } else {
                 const deadline = document.getElementById('editDeadline').value;
-                const pData = calculatePayments(targetAmount, deadline);
-                const remainingAmount = targetAmount - currentGoal.savedAmount;
-                
-                let amountPerPayment = targetAmount;
-                if (pData.count > 0 && remainingAmount > 0) amountPerPayment = Math.ceil(remainingAmount / pData.count);
-                else if (remainingAmount <= 0) amountPerPayment = 0; 
-
-                const updatedGoal = { name, targetAmount, deadline, color, totalPayments: pData.count, amountPerPayment };
+                const updatedGoal = { name, targetAmount, deadline, color };
                 await db.collection("goals").doc(currentGoal.id).update(updatedGoal);
                 await triggerAutoBackup(`Se editó suscripción: ${name}`);
             }
