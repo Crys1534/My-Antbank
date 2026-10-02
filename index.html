@@ -259,7 +259,6 @@
         </div>
     </div>
 
-    <!-- NUEVO: Modal de Abono Extra (Adelanto) -->
     <div class="modal" id="extraPaymentModal">
         <div class="modal-content">
             <h2 style="border:none; color:var(--primary); text-align:center;">Abono Extra</h2>
@@ -273,14 +272,12 @@
         </div>
     </div>
 
-    <!-- Modal Check-in con Panel Doble -->
     <div class="modal" id="checkinModal">
         <div class="modal-content dual-pane">
             <div class="pane-left" style="text-align: center;">
                 <h2 id="ciTitle" style="border:none;">Suscripción</h2>
                 <h1 id="ciAmount" style="font-size: 2.8rem; margin: 15px 0;">$0</h1>
                 
-                <!-- Botones Principales (Pago Normal y Abono Extra) -->
                 <div style="display: flex; gap: 10px; justify-content: center; margin-bottom: 15px;">
                     <button class="main-btn" id="btnMakeCheckin" style="margin: 0; flex: 1;">💰 Registrar Pago</button>
                     <button class="action-btn icon-only" id="btnOpenExtra" style="margin: 0; background-color: var(--tertiary); box-shadow: 0 4px 10px rgba(76, 175, 80, 0.3);" title="Abono Extra (Adelanto)">💵</button>
@@ -288,7 +285,7 @@
                 
                 <div class="action-row">
                     <button class="action-btn icon-only" id="btnEditGoal" style="background-color: var(--secondary);" title="Editar">✏️</button>
-                    <button class="action-btn icon-only" id="btnDeleteGoal" style="background-color: #ff4d4d;" title="Borrar">🗑️️</button>
+                    <button class="action-btn icon-only" id="btnDeleteGoal" style="background-color: #ff4d4d;" title="Borrar">🗑️</button>
                 </div>
             </div>
             
@@ -310,7 +307,7 @@
             <label>Tema Visual</label>
             <select id="themeSelect">
                 <option value="banco">🏦 Predeterminado (Banco)</option>
-                <option value="claro">☀️ Claro</option>
+                <option value="claro">☀️️ Claro</option>
                 <option value="oscuro">🌙 Oscuro</option>
                 <option value="pastel">🎨 Pastel</option>
             </select>
@@ -535,11 +532,15 @@
                 const percentage = Math.min((goal.savedAmount / goal.targetAmount) * 100, 100);
                 const remainingToSave = goal.targetAmount - goal.savedAmount;
                 
-                // CÁLCULO INTELIGENTE DE "ABONO EXTRA"
-                // Descuenta de forma prioritaria el dinero extra del PRÓXIMO PAGO.
-                let extraSaved = goal.savedAmount - (goal.paidCount * goal.amountPerPayment);
-                let dynamicNextPayment = goal.amountPerPayment - extraSaved;
+                // SOLUCIÓN BUG "DINERO PREVIO": Leemos la base prePaidMoney original
+                const initialSaved = goal.prePaidMoney || 0; 
                 
+                // CÁLCULO INTELIGENTE DE "ABONO EXTRA"
+                let expectedNormal = initialSaved + (goal.paidCount * goal.amountPerPayment);
+                let extraSaved = goal.savedAmount - expectedNormal;
+                if (extraSaved < 0) extraSaved = 0; // Prevenir negativos por redondeo matemático
+                
+                let dynamicNextPayment = goal.amountPerPayment - extraSaved;
                 if (dynamicNextPayment < 0) dynamicNextPayment = 0;
                 if (dynamicNextPayment > remainingToSave) dynamicNextPayment = remainingToSave;
 
@@ -550,15 +551,18 @@
                 let simulatedPaidCount = goal.paidCount;
 
                 futureDates.forEach((d, idx) => {
-                    let simExtra = simulatedSaved - (simulatedPaidCount * goal.amountPerPayment);
+                    let simExpected = initialSaved + (simulatedPaidCount * goal.amountPerPayment);
+                    let simExtra = simulatedSaved - simExpected;
+                    if (simExtra < 0) simExtra = 0;
+                    
                     let amt = goal.amountPerPayment - simExtra;
                     if (amt < 0) amt = 0;
                     
                     let rem = goal.targetAmount - simulatedSaved;
                     if (amt > rem) amt = rem;
-                    if (idx === futureDates.length - 1) amt = rem; // El último absorbe centavos
+                    if (idx === futureDates.length - 1) amt = rem; 
                     
-                    if (amt > 0 || idx === 0) futureSchedule.push({ date: d, amount: amt });
+                    if (amt > 0 || idx === 0) futureSchedule.push({ date: d, amount: amt, overdue: false });
                     simulatedSaved += amt;
                     simulatedPaidCount++;
                 });
@@ -790,13 +794,16 @@
                 let prePaidMoney = parseFloat(document.getElementById('prePaidMoney').value) || 0;
                 if (prePaidMoney > targetAmount) prePaidMoney = targetAmount;
                 const deadline = document.getElementById('deadline').value;
+                const remainingAmount = targetAmount - prePaidMoney;
                 const pData = calculatePayments(targetAmount, deadline);
                 
                 let amountPerPayment = targetAmount; 
-                if (pData.count > 0 && targetAmount > 0) amountPerPayment = Math.ceil(targetAmount / pData.count);
+                // SOLUCIÓN BUG CREACIÓN: Dividimos el monto RESTANTE, no el total.
+                if (pData.count > 0 && remainingAmount > 0) amountPerPayment = Math.ceil(remainingAmount / pData.count);
+                else if (remainingAmount <= 0) amountPerPayment = 0; 
 
                 const newGoal = {
-                    name, targetAmount, savedAmount: prePaidMoney, deadline, color, 
+                    name, targetAmount, savedAmount: prePaidMoney, prePaidMoney: prePaidMoney, deadline, color, 
                     totalPayments: pData.count, amountPerPayment, paidCount: 0, createdAt: new Date().toISOString()
                 };
 
@@ -858,7 +865,6 @@
                     btnOpenExtra.disabled = false; btnOpenExtra.style.opacity = "1";
                 }
                 
-                // Pintar Lista de Plan de Pagos ZEBRA
                 let scheduleHtml = '';
                 if (item.futureSchedule && item.futureSchedule.length > 0) {
                     item.futureSchedule.forEach(sItem => {
@@ -940,7 +946,6 @@
 
             const newSavedAmount = currentGoal.savedAmount + amount;
             
-            // OJO: No sumamos a 'paidCount' para que siga siendo la misma fecha pero con menos dinero
             await db.collection("goals").doc(currentGoal.id).update({ savedAmount: newSavedAmount });
             await logMovement(`Abono Extra: ${currentGoal.name}`, amount, 'in', `Abono Extra a: ${currentGoal.name}`, currentGoal.id);
             
@@ -987,13 +992,26 @@
                 await db.collection("wishlists").doc(currentGoal.id).update({ name, targetAmount, color });
                 await triggerAutoBackup(`Se editó wishlist: ${name}`);
             } else {
+                // SOLUCIÓN BUG EDICIÓN: Reiniciamos la base para re-amortizar el plan desde HOY.
                 const deadline = document.getElementById('editDeadline').value;
                 const pData = calculatePayments(targetAmount, deadline);
+                const remainingAmount = targetAmount - currentGoal.savedAmount;
                 
                 let amountPerPayment = targetAmount;
-                if (pData.count > 0 && targetAmount > 0) amountPerPayment = Math.ceil(targetAmount / pData.count);
+                if (pData.count > 0 && remainingAmount > 0) amountPerPayment = Math.ceil(remainingAmount / pData.count);
+                else if (remainingAmount <= 0) amountPerPayment = 0; 
 
-                const updatedGoal = { name, targetAmount, deadline, color, totalPayments: pData.count, amountPerPayment };
+                const updatedGoal = { 
+                    name, 
+                    targetAmount, 
+                    deadline, 
+                    color, 
+                    totalPayments: pData.count, 
+                    amountPerPayment,
+                    prePaidMoney: currentGoal.savedAmount, // La nueva base empieza a partir de hoy
+                    paidCount: 0, // Reiniciamos para que el algoritmo cree las nuevas fechas limpio
+                    createdAt: new Date().toISOString()
+                };
                 await db.collection("goals").doc(currentGoal.id).update(updatedGoal);
                 await triggerAutoBackup(`Se editó suscripción: ${name}`);
             }
