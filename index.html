@@ -110,13 +110,13 @@
         }
 
         .history-list { max-height: 150px; overflow-y: auto; padding-right: 5px; }
-        .history-mini-item { display: flex; justify-content: space-between; font-size: 0.75rem; padding: 8px 0; border-bottom: 1px solid var(--shadow); align-items: center;}
+        .history-mini-item { display: flex; justify-content: space-between; font-size: 0.85rem; padding: 8px 0; border-bottom: 1px solid var(--shadow); align-items: center;}
 
         /* DISEÑO CEBRA PARA PRÓXIMOS PAGOS */
         #ciScheduleList { margin-top: 10px; }
-        #ciScheduleList .history-mini-item { padding: 4px 10px; border-bottom: none; border-radius: 4px; }
-        #ciScheduleList .history-mini-item:nth-child(odd) { background-color: rgba(0, 0, 0, 0.02); } /* Gris casi blanco */
-        #ciScheduleList .history-mini-item:nth-child(even) { background-color: rgba(0, 0, 0, 0.06); } /* Gris claro */
+        #ciScheduleList .history-mini-item { padding: 12px 10px; border-bottom: none; border-radius: 8px; margin-bottom: 4px; }
+        #ciScheduleList .history-mini-item:nth-child(odd) { background-color: rgba(0, 0, 0, 0.02); }
+        #ciScheduleList .history-mini-item:nth-child(even) { background-color: rgba(0, 0, 0, 0.06); }
         
         [data-theme="oscuro"] #ciScheduleList .history-mini-item:nth-child(odd) { background-color: rgba(255, 255, 255, 0.02); }
         [data-theme="oscuro"] #ciScheduleList .history-mini-item:nth-child(even) { background-color: rgba(255, 255, 255, 0.06); }
@@ -259,31 +259,46 @@
         </div>
     </div>
 
+    <!-- NUEVO: Modal de Abono Extra (Adelanto) -->
+    <div class="modal" id="extraPaymentModal">
+        <div class="modal-content">
+            <h2 style="border:none; color:var(--primary); text-align:center;">Abono Extra</h2>
+            <p style="text-align:center; color:var(--text-muted); font-size:0.9rem; margin-bottom:15px;">Este dinero se descontará matemáticamente de tu próximo pago agendado.</p>
+            <form id="extraPaymentForm">
+                <label>Cantidad a adelantar ($)</label>
+                <input type="number" id="extraAmount" placeholder="Ej. 7" required min="1" step="0.01">
+                
+                <button type="submit" class="main-btn" style="margin-bottom:0; background-color: var(--tertiary);">Abonar 💵</button>
+            </form>
+        </div>
+    </div>
+
+    <!-- Modal Check-in con Panel Doble -->
     <div class="modal" id="checkinModal">
         <div class="modal-content dual-pane">
             <div class="pane-left" style="text-align: center;">
                 <h2 id="ciTitle" style="border:none;">Suscripción</h2>
                 <h1 id="ciAmount" style="font-size: 2.8rem; margin: 15px 0;">$0</h1>
                 
-                <button class="main-btn" id="btnMakeCheckin">💰 Registrar Pago</button>
+                <!-- Botones Principales (Pago Normal y Abono Extra) -->
+                <div style="display: flex; gap: 10px; justify-content: center; margin-bottom: 15px;">
+                    <button class="main-btn" id="btnMakeCheckin" style="margin: 0; flex: 1;">💰 Registrar Pago</button>
+                    <button class="action-btn icon-only" id="btnOpenExtra" style="margin: 0; background-color: var(--tertiary); box-shadow: 0 4px 10px rgba(76, 175, 80, 0.3);" title="Abono Extra (Adelanto)">💵</button>
+                </div>
                 
                 <div class="action-row">
                     <button class="action-btn icon-only" id="btnEditGoal" style="background-color: var(--secondary);" title="Editar">✏️</button>
-                    <button class="action-btn icon-only" id="btnDeleteGoal" style="background-color: #ff4d4d;" title="Borrar">🗑️</button>
+                    <button class="action-btn icon-only" id="btnDeleteGoal" style="background-color: #ff4d4d;" title="Borrar">🗑️️</button>
                 </div>
             </div>
             
             <div class="pane-right" id="ciRightPane">
-                <!-- CONTROLES TIPO TOGGLE PARA PLAN VS HISTORIAL -->
                 <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom: 10px;">
                     <h3 id="paneRightTitle" style="color: var(--secondary); font-size: 1.1rem; border-bottom: 1px solid var(--shadow); padding-bottom: 5px; margin:0; flex:1;">Próximos Pagos</h3>
                     <button class="action-btn" id="btnToggleHistory" style="padding: 4px 8px; margin:0 0 0 10px; width: auto; font-size: 0.75rem; background: var(--secondary); border-radius: 8px;">Ver Abonos</button>
                 </div>
 
-                <!-- Lista de Fechas Proyectadas con diseño Zebra -->
                 <div id="ciScheduleList" class="history-list"></div>
-
-                <!-- Historial Real (Oculto inicialmente) -->
                 <div id="ciHistoryList" class="history-list" style="display:none;"></div>
             </div>
         </div>
@@ -470,6 +485,19 @@
             return dates;
         }
 
+        function calculatePayments(totalAmount, deadlineDate, startDate = new Date()) {
+            const start = new Date(startDate); start.setHours(0,0,0,0);
+            const end = new Date(deadlineDate); end.setDate(end.getDate() + 1); end.setHours(0,0,0,0);
+            if (end <= start) return { count: 0 };
+            
+            let count = 0; let current = new Date(start); current.setDate(current.getDate() + 1);
+            while (current <= end) {
+                if (isPayday(current)) count++;
+                current.setDate(current.getDate() + 1);
+            }
+            return { count };
+        }
+
         async function logMovement(title, amount, type, actionDescForBackup, goalId = null) {
             await db.collection("movements").add({
                 title: title, amount: amount, type: type, date: new Date().toISOString(), goalId: goalId
@@ -507,31 +535,38 @@
                 const percentage = Math.min((goal.savedAmount / goal.targetAmount) * 100, 100);
                 const remainingToSave = goal.targetAmount - goal.savedAmount;
                 
-                // CÁLCULO DINÁMICO INTELIGENTE
-                const futureDates = getFuturePaydays(goal.deadline);
-                let dynamicNextPayment = 0;
-                let futureSchedule = [];
+                // CÁLCULO INTELIGENTE DE "ABONO EXTRA"
+                // Descuenta de forma prioritaria el dinero extra del PRÓXIMO PAGO.
+                let extraSaved = goal.savedAmount - (goal.paidCount * goal.amountPerPayment);
+                let dynamicNextPayment = goal.amountPerPayment - extraSaved;
+                
+                if (dynamicNextPayment < 0) dynamicNextPayment = 0;
+                if (dynamicNextPayment > remainingToSave) dynamicNextPayment = remainingToSave;
 
-                if (remainingToSave > 0) {
-                    if (futureDates.length > 0) {
-                        dynamicNextPayment = Math.ceil(remainingToSave / futureDates.length);
-                        let accumulated = 0;
-                        
-                        futureDates.forEach((d, idx) => {
-                            let amt = dynamicNextPayment;
-                            if (idx === futureDates.length - 1) amt = remainingToSave - accumulated;
-                            accumulated += amt;
-                            futureSchedule.push({ date: d, amount: amt });
-                        });
-                    } else {
-                        dynamicNextPayment = remainingToSave;
-                        futureSchedule.push({ date: new Date(), amount: remainingToSave, overdue: true });
-                    }
-                }
+                // Armamos la lista proyectada visualmente (para el check-in)
+                const futureDates = getFuturePaydays(goal.deadline);
+                let futureSchedule = [];
+                let simulatedSaved = goal.savedAmount;
+                let simulatedPaidCount = goal.paidCount;
+
+                futureDates.forEach((d, idx) => {
+                    let simExtra = simulatedSaved - (simulatedPaidCount * goal.amountPerPayment);
+                    let amt = goal.amountPerPayment - simExtra;
+                    if (amt < 0) amt = 0;
+                    
+                    let rem = goal.targetAmount - simulatedSaved;
+                    if (amt > rem) amt = rem;
+                    if (idx === futureDates.length - 1) amt = rem; // El último absorbe centavos
+                    
+                    if (amt > 0 || idx === 0) futureSchedule.push({ date: d, amount: amt });
+                    simulatedSaved += amt;
+                    simulatedPaidCount++;
+                });
 
                 goal.dynamicNextPayment = dynamicNextPayment;
                 goal.futureSchedule = futureSchedule;
 
+                // DETECCIÓN DE ATRASO
                 const expectedNextDates = getNextPaymentDatesOriginal(goal.createdAt, goal.paidCount, 1);
                 let todayZero = new Date(); todayZero.setHours(0,0,0,0);
                 const isOverdue = expectedNextDates.length > 0 && expectedNextDates[0] < todayZero && remainingToSave > 0;
@@ -755,9 +790,14 @@
                 let prePaidMoney = parseFloat(document.getElementById('prePaidMoney').value) || 0;
                 if (prePaidMoney > targetAmount) prePaidMoney = targetAmount;
                 const deadline = document.getElementById('deadline').value;
+                const pData = calculatePayments(targetAmount, deadline);
+                
+                let amountPerPayment = targetAmount; 
+                if (pData.count > 0 && targetAmount > 0) amountPerPayment = Math.ceil(targetAmount / pData.count);
 
                 const newGoal = {
-                    name, targetAmount, savedAmount: prePaidMoney, deadline, color, paidCount: 0, createdAt: new Date().toISOString()
+                    name, targetAmount, savedAmount: prePaidMoney, deadline, color, 
+                    totalPayments: pData.count, amountPerPayment, paidCount: 0, createdAt: new Date().toISOString()
                 };
 
                 const docRef = await db.collection("goals").add(newGoal);
@@ -785,10 +825,10 @@
             document.getElementById('ciTitle').innerText = item.name;
             
             const btnCheckin = document.getElementById('btnMakeCheckin');
+            const btnOpenExtra = document.getElementById('btnOpenExtra');
             const rightPane = document.getElementById('ciRightPane');
             const btnToggle = document.getElementById('btnToggleHistory');
             
-            // Reiniciar estado visual del modal
             showingHistory = false;
             document.getElementById('ciScheduleList').style.display = 'block';
             document.getElementById('ciHistoryList').style.display = 'none';
@@ -798,23 +838,27 @@
             if (isWishlist) {
                 document.getElementById('ciAmount').innerText = mxn.format(item.targetAmount);
                 btnCheckin.style.display = 'none';
+                btnOpenExtra.style.display = 'none';
                 btnToggle.style.display = 'none';
                 document.getElementById('ciScheduleList').style.display = 'none';
                 document.getElementById('ciHistoryList').style.display = 'block';
                 document.getElementById('paneRightTitle').innerText = 'Historial de Abonos';
             } else {
                 btnCheckin.style.display = 'block';
+                btnOpenExtra.style.display = 'block';
                 btnToggle.style.display = 'block';
                 
                 if(item.savedAmount >= item.targetAmount) {
                     document.getElementById('ciAmount').innerText = "Completado";
                     btnCheckin.disabled = true; btnCheckin.style.backgroundColor = "var(--tertiary)";
+                    btnOpenExtra.disabled = true; btnOpenExtra.style.opacity = "0.5";
                 } else {
                     document.getElementById('ciAmount').innerText = mxn.format(item.dynamicNextPayment);
                     btnCheckin.disabled = false; btnCheckin.style.backgroundColor = "var(--primary)";
+                    btnOpenExtra.disabled = false; btnOpenExtra.style.opacity = "1";
                 }
                 
-                // Pintar Lista de Plan de Pagos
+                // Pintar Lista de Plan de Pagos ZEBRA
                 let scheduleHtml = '';
                 if (item.futureSchedule && item.futureSchedule.length > 0) {
                     item.futureSchedule.forEach(sItem => {
@@ -852,7 +896,7 @@
             openModal('checkinModal');
         }
 
-        // Hacer Checkin
+        // Hacer Checkin (Pago normal programado)
         document.getElementById('btnMakeCheckin').onclick = async () => {
             if(!currentGoal || isWishlistItem) return;
             document.getElementById('btnMakeCheckin').innerText = "Guardando...";
@@ -875,6 +919,40 @@
                 confetti({ particleCount: 40, spread: 50, origin: { y: 0.7 }, colors: ['#f2cc8f'] });
                 document.getElementById('btnMakeCheckin').innerText = "💰 Registrar Pago";
             }
+        };
+
+        // Modal Abono Extra (Adelanto)
+        document.getElementById('btnOpenExtra').onclick = () => {
+            closeModal('checkinModal');
+            document.getElementById('extraAmount').value = '';
+            openModal('extraPaymentModal');
+        };
+
+        // Guardar Abono Extra
+        document.getElementById('extraPaymentForm').onsubmit = async (e) => {
+            e.preventDefault();
+            const btn = e.target.querySelector('button[type="submit"]');
+            btn.innerText = "Abonando..."; btn.disabled = true;
+
+            let amount = parseFloat(document.getElementById('extraAmount').value);
+            const remaining = currentGoal.targetAmount - currentGoal.savedAmount;
+            if (amount > remaining) amount = remaining;
+
+            const newSavedAmount = currentGoal.savedAmount + amount;
+            
+            // OJO: No sumamos a 'paidCount' para que siga siendo la misma fecha pero con menos dinero
+            await db.collection("goals").doc(currentGoal.id).update({ savedAmount: newSavedAmount });
+            await logMovement(`Abono Extra: ${currentGoal.name}`, amount, 'in', `Abono Extra a: ${currentGoal.name}`, currentGoal.id);
+            
+            playCoinSound();
+            if (newSavedAmount >= currentGoal.targetAmount) {
+                confetti({ particleCount: 200, spread: 100, origin: { y: 0.5 } });
+            } else {
+                confetti({ particleCount: 40, spread: 50, origin: { y: 0.7 }, colors: ['#f2cc8f'] });
+            }
+            
+            closeModal('extraPaymentModal');
+            btn.innerText = "Abonar 💵"; btn.disabled = false;
         };
 
         // Abrir Modal de Edición
@@ -910,7 +988,12 @@
                 await triggerAutoBackup(`Se editó wishlist: ${name}`);
             } else {
                 const deadline = document.getElementById('editDeadline').value;
-                const updatedGoal = { name, targetAmount, deadline, color };
+                const pData = calculatePayments(targetAmount, deadline);
+                
+                let amountPerPayment = targetAmount;
+                if (pData.count > 0 && targetAmount > 0) amountPerPayment = Math.ceil(targetAmount / pData.count);
+
+                const updatedGoal = { name, targetAmount, deadline, color, totalPayments: pData.count, amountPerPayment };
                 await db.collection("goals").doc(currentGoal.id).update(updatedGoal);
                 await triggerAutoBackup(`Se editó suscripción: ${name}`);
             }
