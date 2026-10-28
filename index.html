@@ -2,18 +2,18 @@
 <html lang="es" data-theme="banco">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
     <title>My AntBank</title>
     
     <!-- PWA Manifest -->
     <link rel="manifest" href="manifest.json">
     <meta name="theme-color" content="#d90429">
     
-    <!-- Firebase Compat -->
-    <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
-    <!-- Confetti -->
-    <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
+    <!-- Librerías guardadas dentro del proyecto (carpeta vendor/) para que la app, y el APK,
+         carguen sin depender de internet. Son las mismas versiones de antes: Firebase 9.23.0 y confetti 1.6.0 -->
+    <script src="vendor/firebase-app-compat.js"></script>
+    <script src="vendor/firebase-firestore-compat.js"></script>
+    <script src="vendor/confetti.browser.min.js"></script>
 
     <style>
         /* === SISTEMA DE TEMAS === */
@@ -39,7 +39,7 @@
         }
 
         * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Segoe UI', Tahoma, sans-serif; }
-        body { background-color: var(--bg-color); color: var(--text-main); padding: 20px; padding-bottom: 100px; transition: background 0.3s; }
+        body { background-color: var(--bg-color); color: var(--text-main); padding: calc(20px + env(safe-area-inset-top, 0px)) calc(20px + env(safe-area-inset-right, 0px)) calc(100px + env(safe-area-inset-bottom, 0px)) calc(20px + env(safe-area-inset-left, 0px)); transition: background 0.3s; }
         .container { width: 100%; max-width: 500px; margin: 0 auto; }
 
         .header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; }
@@ -96,7 +96,7 @@
         .mov-positive { color: var(--tertiary); font-weight: bold; }
         .mov-negative { color: var(--primary); font-weight: bold; }
 
-        .fab { position: fixed; bottom: 20px; right: 20px; width: 65px; height: 65px; background-color: var(--primary); color: white; border-radius: 50%; font-size: 2rem; display: flex; align-items: center; justify-content: center; box-shadow: 0 6px 15px rgba(0,0,0,0.3); border: none; z-index: 100; transition: transform 0.2s; }
+        .fab { position: fixed; bottom: calc(20px + env(safe-area-inset-bottom, 0px)); right: calc(20px + env(safe-area-inset-right, 0px)); width: 65px; height: 65px; background-color: var(--primary); color: white; border-radius: 50%; font-size: 2rem; display: flex; align-items: center; justify-content: center; box-shadow: 0 6px 15px rgba(0,0,0,0.3); border: none; z-index: 100; transition: transform 0.2s; }
         .fab:hover { transform: scale(1.05); }
 
         .modal { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: var(--modal-bg); z-index: 1000; justify-content: center; align-items: center; backdrop-filter: blur(5px); animation: fadeIn 0.2s; }
@@ -387,14 +387,30 @@
             } catch(e) {}
         }
 
+        // === 2b. APP DE ANDROID (APK con Capacitor) ===
+        // true solo cuando la página corre dentro del APK; en el navegador sigue igual que siempre
+        function isNativeApp() {
+            return !!(window.Capacitor && window.Capacitor.isNativePlatform && window.Capacitor.isNativePlatform());
+        }
+        // Tema oscuro -> iconos claros en la barra superior; los demás temas -> iconos oscuros
+        function updateSystemBars(theme) {
+            if (!isNativeApp()) return;
+            try {
+                const bars = window.Capacitor.Plugins && window.Capacitor.Plugins.SystemBars;
+                if (bars) bars.setStyle({ style: theme === 'oscuro' ? 'DARK' : 'LIGHT' }).catch(() => {});
+            } catch (e) { console.log('SystemBars', e); }
+        }
+
         // === 3. SISTEMA DE TEMAS Y TABS ===
         const themeSelect = document.getElementById('themeSelect');
         const savedTheme = localStorage.getItem('appTheme') || 'banco';
         document.documentElement.setAttribute('data-theme', savedTheme);
         themeSelect.value = savedTheme;
+        updateSystemBars(savedTheme);
         themeSelect.addEventListener('change', (e) => {
             document.documentElement.setAttribute('data-theme', e.target.value);
             localStorage.setItem('appTheme', e.target.value);
+            updateSystemBars(e.target.value);
         });
 
         function switchTab(tab) {
@@ -1099,8 +1115,30 @@
             });
         };
 
-        // PWA Service Worker
-        if ('serviceWorker' in navigator) {
+        // === 8. BOTÓN "ATRÁS" DE ANDROID (solo dentro del APK) ===
+        if (isNativeApp() && window.Capacitor.Plugins && window.Capacitor.Plugins.App) {
+            const AppPlugin = window.Capacitor.Plugins.App;
+            AppPlugin.addListener('backButton', () => {
+                // 1) Si hay una ventana abierta, "atrás" la cierra (primero los avisos de confirmación)
+                const abiertas = Array.from(document.querySelectorAll('.modal')).filter(m => m.style.display === 'flex');
+                if (abiertas.length > 0) {
+                    const arriba = abiertas.find(m => m.id === 'customDialogModal') || abiertas[abiertas.length - 1];
+                    closeModal(arriba.id);
+                    return;
+                }
+                // 2) Si estás en otra pestaña, vuelve a la principal
+                const vistaActiva = document.querySelector('.view-section.active');
+                if (vistaActiva && vistaActiva.id !== 'viewAlcancia') {
+                    switchTab('alcancia');
+                    return;
+                }
+                // 3) Si ya estás en la principal, cierra la app
+                AppPlugin.exitApp();
+            });
+        }
+
+        // PWA Service Worker (dentro del APK no hace falta: los archivos ya viajan dentro de la app)
+        if ('serviceWorker' in navigator && !isNativeApp()) {
             window.addEventListener('load', () => {
                 navigator.serviceWorker.register('sw.js').catch(err => console.log('Error SW', err));
             });

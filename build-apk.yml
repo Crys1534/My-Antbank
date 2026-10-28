@@ -1,0 +1,64 @@
+name: Construir APK
+
+# Se ejecuta solo cada vez que subes cambios a "main", o a mano desde la pestaña Actions
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+jobs:
+  apk:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: 21
+
+      - name: Instalar dependencias
+        run: npm ci
+
+      - name: Copiar la app a la carpeta de Android
+        run: npm run sync
+
+      # Firma opcional: si guardaste la llave en los "Secrets" del repositorio, el APK sale firmado
+      # con ella (así se puede instalar encima de la versión anterior sin desinstalar nada).
+      - name: Preparar firma (opcional)
+        id: firma
+        env:
+          KEYSTORE_BASE64: ${{ secrets.ANTBANK_KEYSTORE_BASE64 }}
+        run: |
+          if [ -n "$KEYSTORE_BASE64" ]; then
+            echo "$KEYSTORE_BASE64" | base64 -d > "$RUNNER_TEMP/antbank.keystore"
+            echo "ANTBANK_KEYSTORE_FILE=$RUNNER_TEMP/antbank.keystore" >> "$GITHUB_ENV"
+            echo "firmado=si" >> "$GITHUB_OUTPUT"
+          else
+            echo "firmado=no" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Compilar el APK
+        working-directory: android
+        env:
+          ANTBANK_KEYSTORE_PASSWORD: ${{ secrets.ANTBANK_KEYSTORE_PASSWORD }}
+          ANTBANK_KEY_ALIAS: ${{ secrets.ANTBANK_KEY_ALIAS }}
+          ANTBANK_KEY_PASSWORD: ${{ secrets.ANTBANK_KEY_PASSWORD }}
+        run: |
+          chmod +x gradlew
+          if [ "${{ steps.firma.outputs.firmado }}" = "si" ]; then
+            ./gradlew assembleRelease
+          else
+            ./gradlew assembleDebug
+          fi
+
+      - name: Guardar el APK para descargarlo
+        uses: actions/upload-artifact@v4
+        with:
+          name: MyAntBank-apk
+          path: android/app/build/outputs/apk/**/*.apk

@@ -1,0 +1,13 @@
+{
+  "appId": "com.crys1534.myantbank",
+  "appName": "My AntBank",
+  "webDir": "www",
+  "backgroundColor": "#f4f6f8",
+  "plugins": {
+    "SystemBars": {
+      "insetsHandling": "css",
+      "initialViewportFitValueHint": "cover",
+      "style": "DEFAULT"
+    }
+  }
+}

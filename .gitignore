@@ -1,0 +1,12 @@
+# Dependencias y carpetas que se generan solas
+node_modules/
+www/
+
+# Llaves de firma del APK: NUNCA subirlas a GitHub
+*.keystore
+*.jks
+keystore-info.txt
+
+# APK ya compilados
+*.apk
+*.aab

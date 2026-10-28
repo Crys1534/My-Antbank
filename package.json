@@ -1,0 +1,18 @@
+{
+  "name": "my-antbank",
+  "version": "1.0.0",
+  "private": true,
+  "description": "My AntBank - ahorros hormiga (app web + APK de Android con Capacitor)",
+  "scripts": {
+    "www": "node scripts/prepare-www.mjs",
+    "sync": "node scripts/prepare-www.mjs && cap sync android"
+  },
+  "dependencies": {
+    "@capacitor/android": "^8.6.0",
+    "@capacitor/app": "^8.1.2",
+    "@capacitor/core": "^8.6.0"
+  },
+  "devDependencies": {
+    "@capacitor/cli": "^8.6.0"
+  }
+}
